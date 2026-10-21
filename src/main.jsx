@@ -1,5 +1,6 @@
 import { StrictMode, useEffect, useMemo, useRef, useState } from 'react'
 import { createRoot } from 'react-dom/client'
+import { z } from 'zod'
 import {
   ArrowRight, ArrowUpRight, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Clock3, History, MapPin, Minus,
   Plus, Search, ShoppingBag, Truck, Utensils, X, MessageCircle,
@@ -9,6 +10,20 @@ import logo from './assets/Red-Png.png'
 import whiteLogo from './assets/White-Png.png'
 
 const WHATSAPP_NUMBER = '923112558691'
+const checkoutSchema = z.object({
+  type: z.enum(['delivery', 'pickup']),
+  name: z.string().trim().min(1, 'Name is required').max(100, 'Name must be 100 characters or fewer').regex(/^[A-Za-z ]+$/, 'Name can contain only letters and spaces'),
+  phone: z.string().trim().min(1, 'Phone number is required').max(20, 'Phone number must be 20 characters or fewer').regex(/^[0-9+() ]+$/, 'Phone can contain only numbers, +, brackets, and spaces'),
+  email: z.string().trim().max(100, 'Email must be 100 characters or fewer').email('Enter a valid email address').or(z.literal('')),
+  destination: z.string().trim(),
+  address: z.string().max(1000, 'Address must be 1000 characters or fewer'),
+  instructions: z.string().max(1000, 'Instructions must be 1000 characters or fewer'),
+}).superRefine((details, context) => {
+  if (details.type === 'delivery') {
+    if (!details.destination) context.addIssue({ code: z.ZodIssueCode.custom, path: ['destination'], message: 'Delivery area is required' })
+    if (!details.address.trim()) context.addIssue({ code: z.ZodIssueCode.custom, path: ['address'], message: 'Delivery address is required' })
+  }
+})
 const categories = ['All items', 'Popular', 'Biryani', 'Pulao', 'Burgers', 'Sandwiches', 'BBQ', 'Broast', 'Appetizers', 'Pasta', 'Lasagna', 'Pakistani Curries', 'Chinese', 'Soups', 'Pizza', 'Fries', 'Sides', 'Drinks', 'Bread', 'Dips']
 const categoryIcons = { 'All items': '✦', Popular: '★', Biryani: '🍛', Pulao: '🥘', Burgers: '🍔', Sandwiches: '🥪', BBQ: '🍢', Broast: '🍗', Appetizers: '🥟', Pasta: '🍝', Lasagna: '🍲', 'Pakistani Curries': '🍲', Chinese: '🥡', Soups: '🥣', Pizza: '🍕', Fries: '🍟', Sides: '🍽️', Drinks: '🥤', Bread: '🫓', Dips: '🥣' }
 const deliveryZones = [
@@ -112,12 +127,28 @@ function App() {
     const orderDeliveryFee = details.type === 'delivery' ? getDeliveryFee(details.destination || destination) : 0
     const orderTotal = subtotal + orderDeliveryFee
     const order = { id: `UB-${Date.now().toString().slice(-6)}`, date: new Date().toLocaleDateString('en-PK'), items: cart, total: orderTotal, ...details }
-    const lines = cart.map((item) => `• ${item.name} x${item.quantity} — ${money(item.price * item.quantity)}${item.specialInstructions ? ` (${item.specialInstructions})` : ''}`).join('\n')
-    const message = `*New order for United Biryani*\n\nOrder: ${order.id}\n${lines}\n\nSubtotal: ${money(subtotal)}\nDelivery fee: ${money(orderDeliveryFee)}\n*Grand total: ${money(orderTotal)}*\nOrder type: ${details.type === 'delivery' ? 'Delivery' : 'Pickup'}\nArea: ${details.destination || destination}\n${details.address ? `Address: ${details.address}\n` : ''}Name: ${details.name}\nPhone: ${details.phone}\nPayment: Cash on delivery`
+    const lines = cart.map((item) => `• ${item.name}\n  Quantity: ${item.quantity}\n  Price: ${money(item.price * item.quantity)}${item.specialInstructions ? `\n  Special instructions: ${item.specialInstructions}` : ''}`).join('\n\n')
+    const message = `*NEW ORDER — UNITED BIRYANI*
+
+*Order ID:* ${order.id}
+
+*ITEMS*
+${lines}
+
+*ORDER SUMMARY*
+Subtotal: ${money(subtotal)}
+Delivery fee: ${money(orderDeliveryFee)}
+*Grand total: ${money(orderTotal)}*
+
+*ORDER DETAILS*
+Order type: ${details.type === 'delivery' ? 'Delivery' : 'Pickup'}
+${details.destination || destination ? `Area: ${details.destination || destination}\n` : ''}${details.address ? `Address: ${details.address}\n` : ''}
+*CUSTOMER DETAILS*
+Name: ${details.name}
+Phone: ${details.phone}
+${details.email ? `Email: ${details.email}\n` : ''}${details.instructions ? `Other instructions: ${details.instructions}\n` : ''}
+Payment: Cash on delivery`
     setHistory((current) => [order, ...current].slice(0, 5))
-    setCart([])
-    setCheckoutOpen(false)
-    setCartOpen(false)
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`, '_blank', 'noopener,noreferrer')
   }
 
@@ -179,8 +210,21 @@ function App() {
 
 function LocationSearchSelect({ value, onChange, label = 'Search Karachi areas' }) {
   const [query, setQuery] = useState('')
+  const [open, setOpen] = useState(false)
+  const selectRef = useRef(null)
   const filteredZones = deliveryZones.filter(([name]) => name.toLowerCase().includes(query.toLowerCase()))
-  return <div className="location-select"><div className="location-search"><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={label} aria-label={label} /></div><select value={value} onChange={(event) => onChange(event.target.value)}><option value="">Select Karachi area</option>{filteredZones.map(([name]) => <option value={name} key={name}>{name}</option>)}</select>{query && filteredZones.length === 0 && <small className="location-search-empty">No matching area found</small>}</div>
+  const cancelSearch = () => { setQuery(''); setOpen(false) }
+  useEffect(() => {
+    const closeResults = (event) => {
+      if (!selectRef.current?.contains(event.target)) {
+        cancelSearch()
+      }
+    }
+    document.addEventListener('mousedown', closeResults, true)
+    return () => document.removeEventListener('mousedown', closeResults, true)
+  }, [])
+  const selectArea = (name) => { onChange(name); setQuery(''); setOpen(false) }
+  return <div ref={selectRef} className={`location-select${open ? ' is-open' : ''}`}><div className="location-search"><Search size={16} /><input value={open ? query : value} onFocus={() => { setOpen(true); setQuery('') }} onChange={(event) => { setOpen(true); setQuery(event.target.value) }} placeholder={value || label} aria-label={label} /><ChevronDown size={16} /></div>{open && <div className="location-results" role="listbox">{filteredZones.map(([name]) => <button type="button" role="option" aria-selected={name === value} key={name} onClick={() => selectArea(name)}>{name}</button>)}{filteredZones.length === 0 && <small className="location-search-empty">No matching area found</small>}</div>}</div>
 }
 
 function LocationGate({ mode, destination, chooseMode, chooseDestination, close, dismissible }) {
@@ -202,18 +246,36 @@ function ProductModal({ item, close, add }) {
   return <div className="overlay modal-overlay" onMouseDown={close}><div className="product-modal" onMouseDown={(event) => event.stopPropagation()}><button className="modal-close icon-button" onClick={close}><X /></button><div className="product-image">{item.image}</div><div className="product-copy"><p className="eyebrow">{item.category}</p><h2>{item.name}</h2><strong className="product-price">{money(item.price)}</strong><p>{item.description}</p><label>Special instructions<textarea rows="3" value={specialInstructions} onChange={(event) => setSpecialInstructions(event.target.value)} placeholder="Less spicy, extra raita, no onions..." /></label><div className="product-actions"><div className="quantity large"><button onClick={() => setQuantity(Math.max(1, quantity - 1))}><Minus size={16} /></button><b>{quantity}</b><button onClick={() => setQuantity(quantity + 1)}><Plus size={16} /></button></div><button className="primary-button" onClick={() => { for (let index = 0; index < quantity; index += 1) add(item, specialInstructions) }}>Add to order · {money(item.price * quantity)} <Plus size={17} /></button></div></div></div></div>
 }
 
-function CartDrawer({ cart, subtotal, deliveryFee, grandTotal, updateQuantity, close, checkout, mode, destination, openLocationGate, chooseDestination }) {
-  return <div className="overlay" onMouseDown={close}><aside className="drawer" onMouseDown={(event) => event.stopPropagation()}><div className="drawer-header"><div><p className="eyebrow">Your order</p><h2>Your cart</h2></div><button className="icon-button" onClick={close}><X /></button></div>{cart.length ? <><div className="drawer-items">{cart.map((item) => <div className="drawer-item" key={item.id}><span className="mini-food">{item.image}</span><div className="drawer-item-copy"><strong>{item.name}</strong><span>{money(item.price)}{item.specialInstructions && ` · ${item.specialInstructions}`}</span></div><div className="quantity"><button onClick={() => updateQuantity(item.id, -1)}><Minus size={14} /></button><b>{item.quantity}</b><button onClick={() => updateQuantity(item.id, 1)}><Plus size={14} /></button></div></div>)}<button className="add-more" onClick={close}><Plus size={17} /> Add more items</button></div><div className="drawer-footer"><button className="selected-mode" onClick={openLocationGate}><span>{mode === 'delivery' ? <Truck size={17} /> : <Utensils size={17} />} {mode === 'delivery' ? 'Delivery' : 'Pickup'}</span><span>Change <ChevronRight size={16} /></span></button>{mode === 'delivery' && <label className="compact-label">Destination / location<LocationSearchSelect value={destination} onChange={chooseDestination} label="Search delivery area" /></label>}<div className="summary-row"><span>Subtotal</span><strong>{money(subtotal)}</strong></div><div className="summary-row"><span>Delivery fee</span><strong>{mode === 'delivery' ? money(deliveryFee) : 'Free'}</strong></div><div className="total-row"><span>Grand total</span><strong>{money(grandTotal)}</strong></div><p className="cash-note"><Check size={15} /> Cash on delivery · Fee based on selected area</p><button className="primary-button full" onClick={checkout}>Checkout {money(grandTotal)} <ArrowRight size={17} /></button></div></> : <div className="empty-cart"><ShoppingBag size={38} /><h3>Your bag is empty</h3><p>Pick a favourite and we'll take it from there.</p><button className="primary-button" onClick={close}>Browse menu</button></div>}</aside></div>
+function CartDrawer({ cart, subtotal, deliveryFee, grandTotal, updateQuantity, close, checkout, mode, destination, chooseDestination }) {
+  return <div className="overlay" onMouseDown={close}><aside className="drawer" onMouseDown={(event) => event.stopPropagation()}><div className="drawer-header"><div><p className="eyebrow">Your order</p><h2>Your cart</h2></div><button className="icon-button" onClick={close}><X /></button></div>{cart.length ? <><div className="drawer-items">{cart.map((item) => <div className="drawer-item" key={item.id}><span className="mini-food">{item.image}</span><div className="drawer-item-copy"><strong>{item.name}</strong><span>{money(item.price)}{item.specialInstructions && ` · ${item.specialInstructions}`}</span></div><div className="quantity"><button onClick={() => updateQuantity(item.id, -1)}><Minus size={14} /></button><b>{item.quantity}</b><button onClick={() => updateQuantity(item.id, 1)}><Plus size={14} /></button></div></div>)}<button className="add-more" onClick={close}><Plus size={17} /> Add more items</button></div><div className="drawer-footer">{mode === 'delivery' && <label className="compact-label">Destination / location<LocationSearchSelect value={destination} onChange={chooseDestination} label="Search delivery area" /></label>}<div className="summary-row"><span>Subtotal</span><strong>{money(subtotal)}</strong></div><div className="summary-row"><span>Delivery fee</span><strong>{mode === 'delivery' ? money(deliveryFee) : 'Free'}</strong></div><div className="total-row"><span>Grand total</span><strong>{money(grandTotal)}</strong></div><p className="cash-note"><Check size={15} /> Cash on delivery · Fee based on selected area</p><button className="primary-button full" onClick={checkout}>Checkout {money(grandTotal)} <ArrowRight size={17} /></button></div></> : <div className="empty-cart"><ShoppingBag size={38} /><h3>Your bag is empty</h3><p>Pick a favourite and we'll take it from there.</p><button className="primary-button" onClick={() => { close(); document.querySelector('#menu')?.scrollIntoView({ behavior: 'smooth' }) }}>Browse menu</button></div>}</aside></div>
 }
 
 function CheckoutModal({ total, deliveryFee, close, submit, mode, destination }) {
-  const [type, setType] = useState(mode || 'delivery')
-  const [details, setDetails] = useState({ name: '', phone: '', address: '', destination })
-  const canSubmit = details.name.trim() && details.phone.trim() && (type === 'pickup' || (details.destination.trim() && details.address.trim()))
+  const [type, setType] = useState('')
+  const [details, setDetails] = useState({ name: '', phone: '', email: '', address: '', destination, instructions: '' })
+  const [errors, setErrors] = useState({})
+  const validate = (nextDetails = details, nextType = type) => {
+    const result = checkoutSchema.safeParse({ ...nextDetails, type: nextType })
+    const nextErrors = result.success ? {} : result.error.issues.reduce((all, issue) => ({ ...all, [issue.path[0]]: issue.message }), {})
+    setErrors(nextErrors)
+    return result.success
+  }
+  const updateDetails = (field, value) => {
+    const nextDetails = { ...details, [field]: value }
+    setDetails(nextDetails)
+    validate(nextDetails)
+  }
+  const chooseType = (nextType) => {
+    setType(nextType)
+    validate(details, nextType)
+  }
+  const canSubmit = checkoutSchema.safeParse({ ...details, type }).success
   const currentDeliveryFee = type === 'delivery' ? getDeliveryFee(details.destination) : 0
   const subtotalValue = total - deliveryFee
   const currentTotal = subtotalValue + currentDeliveryFee
-  return <div className="overlay" onMouseDown={close}><div className="modal" onMouseDown={(event) => event.stopPropagation()}><div className="modal-header"><div><p className="eyebrow">Almost there</p><h2>Order details</h2></div><button className="icon-button" onClick={close}><X /></button></div><div className="order-type"><button className={type === 'delivery' ? 'selected' : ''} onClick={() => setType('delivery')}><Truck size={18} /><span><strong>Delivery</strong><small>To your doorstep</small></span></button><button className={type === 'pickup' ? 'selected' : ''} onClick={() => setType('pickup')}><Utensils size={18} /><span><strong>Pickup</strong><small>From our kitchen</small></span></button></div><label>Your name<input value={details.name} onChange={(event) => setDetails({ ...details, name: event.target.value })} placeholder="e.g. Ayesha Khan" /></label><label>Phone number<input value={details.phone} onChange={(event) => setDetails({ ...details, phone: event.target.value })} placeholder="03XX XXXXXXX" type="tel" /></label>{type === 'delivery' && <><label>Area / destination<LocationSearchSelect value={details.destination} onChange={(value) => setDetails({ ...details, destination: value })} label="Search delivery area" /></label><label>Delivery address<textarea value={details.address} onChange={(event) => setDetails({ ...details, address: event.target.value })} placeholder="House, street, area, Karachi" rows="3" /> </label></>}<div className="checkout-summary"><span>Subtotal</span><b>{money(subtotalValue)}</b><span>Delivery fee</span><b>{type === 'delivery' ? money(currentDeliveryFee) : 'Free'}</b><strong>Grand total</strong><strong>{money(currentTotal)}</strong></div><div className="payment-row"><span><span className="cash-icon">₨</span><span><strong>Cash on delivery</strong><small>Pay when your order arrives</small></span></span><Check size={18} /></div><button className="primary-button full" disabled={!canSubmit} onClick={() => submit({ ...details, type })}>Send order on WhatsApp <ArrowRight size={17} /></button><p className="form-footnote">Your order will open in WhatsApp for confirmation by our team.</p></div></div>
+  const fieldError = (field, value) => errors[field] && value.trim() && <small className="field-error">{errors[field]}</small>
+  const characterCount = (value, limit) => <small className="character-count">{value.length}/{limit} characters</small>
+  return <div className="overlay" onMouseDown={close}><div className="modal" onMouseDown={(event) => event.stopPropagation()}><div className="modal-header"><div><p className="eyebrow">Almost there</p><h2>Order details</h2></div><button className="icon-button" onClick={close}><X /></button></div><span className="required-label">Select order type <b>*</b></span><div className="order-type"><button className={type === 'delivery' ? 'selected' : ''} onClick={() => chooseType('delivery')}><Truck size={18} /><span><strong>Delivery</strong><small>To your doorstep</small></span></button><button className={type === 'pickup' ? 'selected' : ''} onClick={() => chooseType('pickup')}><Utensils size={18} /><span><strong>Pickup</strong><small>From our kitchen</small></span></button></div><label>Your name <b className="required-mark">*</b><input maxLength="100" value={details.name} onChange={(event) => updateDetails('name', event.target.value)} placeholder="e.g. Ayesha Khan" />{fieldError('name', details.name)}{characterCount(details.name, 100)}</label><label>Phone number <b className="required-mark">*</b><input maxLength="20" value={details.phone} onChange={(event) => updateDetails('phone', event.target.value)} placeholder="03XX XXXXXXX" type="tel" />{fieldError('phone', details.phone)}{characterCount(details.phone, 20)}</label><label>Email <span className="optional-label">(optional)</span><input maxLength="100" value={details.email} onChange={(event) => updateDetails('email', event.target.value)} placeholder="e.g. ayesha@example.com" type="email" />{fieldError('email', details.email)}{characterCount(details.email, 100)}</label>{type === 'delivery' && <><label>Area / destination <b className="required-mark">*</b><LocationSearchSelect value={details.destination} onChange={(value) => updateDetails('destination', value)} label="Search delivery area" />{fieldError('destination', details.destination)}</label><label>Delivery address <b className="required-mark">*</b><textarea maxLength="1000" value={details.address} onChange={(event) => updateDetails('address', event.target.value)} placeholder="House, street, area, Karachi" rows="3" />{fieldError('address', details.address)}{characterCount(details.address, 1000)}</label></>}<label>Other instructions <span className="optional-label">(optional)</span><textarea maxLength="1000" value={details.instructions} onChange={(event) => updateDetails('instructions', event.target.value)} placeholder="Any other instructions for your order..." rows="3" />{fieldError('instructions', details.instructions)}{characterCount(details.instructions, 1000)}</label><div className="checkout-summary"><span>Subtotal</span><b>{money(subtotalValue)}</b><span>Delivery fee</span><b>{type === 'delivery' ? money(currentDeliveryFee) : 'Free'}</b><strong>Grand total</strong><strong>{money(currentTotal)}</strong></div><div className="payment-row"><span><span className="cash-icon">₨</span><span><strong>Cash on delivery</strong><small>Pay when your order arrives</small></span></span><Check size={18} /></div><button className="primary-button full" disabled={!canSubmit} onClick={() => { if (validate()) submit({ ...details, type }) }}>Send order on WhatsApp <ArrowRight size={17} /></button><p className="form-footnote">Your order will open in WhatsApp for confirmation by our team.</p></div></div>
 }
 
 function OrderHistory({ orders, close }) {
