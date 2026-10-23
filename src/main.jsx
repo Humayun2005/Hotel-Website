@@ -271,7 +271,7 @@ Payment: Cash on delivery`
             <img src={whiteLogo} alt="United Biryani" />
             <p>Karachi's signature biryani, BBQ and fast food. Freshly cooked and delivered hot, straight to your doorstep.</p>
             <div className="footer-socials">
-              <a href={`https://wa.me/${WHATSAPP_NUMBER}`} target="_blank" rel="noreferrer" aria-label="WhatsApp"><MessageCircle size={19} /></a>
+              <a href={`https://wa.me/${WHATSAPP_NUMBER}`} target="_blank" rel="noreferrer" aria-label="WhatsApp"><WhatsAppIcon size={21} /></a>
               <a href={`tel:+${WHATSAPP_NUMBER}`} aria-label="Call us"><Phone size={18} /></a>
               <a href="https://maps.google.com/?q=Main+Korangi+Industrial+Road+Landhi+Karachi" target="_blank" rel="noreferrer" aria-label="Find us on the map"><MapPin size={19} /></a>
             </div>
@@ -316,12 +316,16 @@ Payment: Cash on delivery`
     {ordersOpen && <OrderHistory orders={history} close={() => setOrdersOpen(false)} />}
     {toast && <div className="toast"><Check size={17} /> {toast}</div>}
     <button className={`floating-search${cartBarVisible ? ' over-bar' : ''}`} onClick={focusSearch} aria-label="Search the menu"><Search size={22} /></button>
-    <a className={`floating-whatsapp${showBackToTop ? ' with-top' : ''}${cartBarVisible ? ' over-bar' : ''}`} href={`https://wa.me/${WHATSAPP_NUMBER}`} target="_blank" rel="noreferrer" aria-label="Chat on WhatsApp"><svg viewBox="0 0 32 32" aria-hidden="true"><path fill="currentColor" d="M16 3.2a12.7 12.7 0 0 0-10.9 19L3.3 28.8l6.8-1.7A12.8 12.8 0 1 0 16 3.2Zm0 23.3c-2 0-3.9-.6-5.5-1.6l-.4-.2-4 .9 1-3.9-.3-.4A10.5 10.5 0 1 1 16 26.5Zm5.8-7.8c-.3-.2-1.7-.9-2-.9-.3-.1-.5-.1-.7.2l-.9 1.1c-.2.2-.4.3-.7.1a8.5 8.5 0 0 1-2.4-1.5 9.3 9.3 0 0 1-1.7-2.1c-.2-.3 0-.5.2-.7l.5-.6.3-.5c.1-.2 0-.4 0-.6l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1 2.9 1.1 3.1c.1.2 2 3.1 4.8 4.3 2.8 1.2 2.8.8 3.3.8.5 0 1.7-.7 1.9-1.4.3-.7.3-1.3.2-1.5-.1-.2-.3-.3-.6-.5Z" /></svg></a>
+    <a className={`floating-whatsapp${showBackToTop ? ' with-top' : ''}${cartBarVisible ? ' over-bar' : ''}`} href={`https://wa.me/${WHATSAPP_NUMBER}`} target="_blank" rel="noreferrer" aria-label="Chat on WhatsApp"><WhatsAppIcon /></a>
     {showBackToTop && <button className={`floating-top${cartBarVisible ? ' over-bar' : ''}`} onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} aria-label="Back to top"><ChevronUp size={24} /></button>}
   </div>
 }
 
 const HERO_INTERVAL = 5500
+
+function WhatsAppIcon({ size }) {
+  return <svg className="whatsapp-icon" viewBox="0 0 32 32" width={size} height={size} aria-hidden="true"><path fill="currentColor" d="M16 3.2a12.7 12.7 0 0 0-10.9 19L3.3 28.8l6.8-1.7A12.8 12.8 0 1 0 16 3.2Zm0 23.3c-2 0-3.9-.6-5.5-1.6l-.4-.2-4 .9 1-3.9-.3-.4A10.5 10.5 0 1 1 16 26.5Zm5.8-7.8c-.3-.2-1.7-.9-2-.9-.3-.1-.5-.1-.7.2l-.9 1.1c-.2.2-.4.3-.7.1a8.5 8.5 0 0 1-2.4-1.5 9.3 9.3 0 0 1-1.7-2.1c-.2-.3 0-.5.2-.7l.5-.6.3-.5c.1-.2 0-.4 0-.6l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1 2.9 1.1 3.1c.1.2 2 3.1 4.8 4.3 2.8 1.2 2.8.8 3.3.8.5 0 1.7-.7 1.9-1.4.3-.7.3-1.3.2-1.5-.1-.2-.3-.3-.6-.5Z" /></svg>
+}
 
 function HeroSlider({ onOrder, onExplore }) {
   const [index, setIndex] = useState(0)
@@ -329,7 +333,6 @@ function HeroSlider({ onOrder, onExplore }) {
     const timer = window.setTimeout(() => setIndex((current) => (current + 1) % heroSlides.length), HERO_INTERVAL)
     return () => window.clearTimeout(timer)
   }, [index])
-  const go = (step) => setIndex((current) => (current + step + heroSlides.length) % heroSlides.length)
   const slide = heroSlides[index]
   return <section className="hero" id="top" aria-roledescription="carousel">
     <div className="hero-bg" aria-hidden="true">
@@ -348,18 +351,6 @@ function HeroSlider({ onOrder, onExplore }) {
         <button className="hero-btn glass" onClick={onExplore}>Explore Menu <Play size={17} fill="currentColor" /></button>
       </div>
     </div>
-    <div className="hero-card">
-      <div className="hero-card-top">
-        <span className="hero-card-icon"><Truck size={26} /></span>
-        <div><b>{deliveryAreaCount}+ Areas</b><small>Karachi delivery</small></div>
-      </div>
-      <div className="hero-thumbs">
-        {heroSlides.map((item, itemIndex) => <button key={item.image} className={itemIndex === index ? 'active' : ''} onClick={() => setIndex(itemIndex)} aria-label={`Show ${item.title}`}><img src={item.image} alt="" /></button>)}
-      </div>
-      <span className="hero-card-note"><Clock3 size={13} /> Open daily 11 AM — 2 AM</span>
-    </div>
-    <button className="hero-arrow prev" onClick={() => go(-1)} aria-label="Previous slide"><ChevronLeft size={26} /></button>
-    <button className="hero-arrow next" onClick={() => go(1)} aria-label="Next slide"><ChevronRight size={26} /></button>
     <div className="hero-progress">
       {heroSlides.map((item, itemIndex) => <button key={item.image} onClick={() => setIndex(itemIndex)} className={itemIndex === index ? 'active' : itemIndex < index ? 'done' : ''} aria-label={`Slide ${itemIndex + 1}`}><i style={{ animationDuration: `${HERO_INTERVAL}ms` }} /></button>)}
     </div>
@@ -436,7 +427,7 @@ function Features() {
         <p>Pay when your food arrives. No cards, no hassle.</p>
       </Reveal>
       <Reveal className="feature-tile">
-        <span className="feature-icon"><MessageCircle size={26} /></span>
+        <span className="feature-icon"><WhatsAppIcon size={28} /></span>
         <h4>WhatsApp Ordering</h4>
         <p>Your order is confirmed directly by our team on WhatsApp.</p>
       </Reveal>
@@ -456,6 +447,7 @@ function SideMenu({ close, sections, jumpTo, openOrders, openLocation, openCart,
         <button onClick={() => run(openLocation)}><MapPin size={19} /> Change location</button>
         <button onClick={() => run(() => scrollToId('about'))}><Utensils size={19} /> About us</button>
         <a href={`tel:+${WHATSAPP_NUMBER}`}><Phone size={19} /> 0311-2558691</a>
+        <a href={`https://wa.me/${WHATSAPP_NUMBER}`} target="_blank" rel="noreferrer"><WhatsAppIcon size={19} /> WhatsApp us</a>
       </nav>
       <p className="side-menu-label">Menu categories</p>
       <div className="side-menu-cats">{sections.map(({ category, items }) => <button key={category} onClick={() => run(() => jumpTo(category))}><span>{categoryIcons[category]}</span>{category}<small>{items.length}</small></button>)}</div>
@@ -489,11 +481,13 @@ function CategoryTabs({ sections, activeCategory, jumpTo }) {
   return <div className="tabs-wrapper">
     <div className="tab-slider">
       <button className="tab-arrow tab-menu" onClick={() => setListOpen((open) => !open)} aria-label="All categories"><Menu size={22} /></button>
-      <button className={`tab-arrow tab-left${canScroll.left ? '' : ' is-hidden'}`} onClick={() => scroll(-300)} aria-label="Scroll left" tabIndex={canScroll.left ? 0 : -1}><ChevronLeft size={20} /></button>
-      <div className="tab-container" ref={trackRef}>
-        {sections.map(({ category }) => <button key={category} className={`tab-item${activeCategory === category ? ' tab-active' : ''}`} onClick={() => jumpTo(category)}>{category}</button>)}
+      <div className="tab-scroll">
+        <button className={`tab-arrow tab-left${canScroll.left ? '' : ' is-hidden'}`} onClick={() => scroll(-300)} aria-label="Scroll left" tabIndex={canScroll.left ? 0 : -1}><ChevronLeft size={22} /></button>
+        <div className="tab-container" ref={trackRef}>
+          {sections.map(({ category }) => <button key={category} className={`tab-item${activeCategory === category ? ' tab-active' : ''}`} onClick={() => jumpTo(category)}>{category}</button>)}
+        </div>
+        <button className={`tab-arrow tab-right${canScroll.right ? '' : ' is-hidden'}`} onClick={() => scroll(300)} aria-label="Scroll right" tabIndex={canScroll.right ? 0 : -1}><ChevronRight size={22} /></button>
       </div>
-      <button className={`tab-arrow tab-right${canScroll.right ? '' : ' is-hidden'}`} onClick={() => scroll(300)} aria-label="Scroll right" tabIndex={canScroll.right ? 0 : -1}><ChevronRight size={20} /></button>
     </div>
     {listOpen && <div className="category-list">{sections.map(({ category, items }) => <button key={category} className={activeCategory === category ? 'active' : ''} onClick={() => { setListOpen(false); jumpTo(category) }}><span>{categoryIcons[category]} {category}</span><small>{items.length}</small></button>)}</div>}
   </div>
