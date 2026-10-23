@@ -264,47 +264,47 @@ Payment: Cash on delivery`
           </Reveal>
         </section>
       </main>
-
-      <footer className="footer" id="contact">
-        <div className="footer-grid">
-          <div className="footer-brand">
-            <img src={whiteLogo} alt="United Biryani" />
-            <p>Karachi's signature biryani, BBQ and fast food. Freshly cooked and delivered hot, straight to your doorstep.</p>
-            <div className="footer-socials">
-              <a href={`https://wa.me/${WHATSAPP_NUMBER}`} target="_blank" rel="noreferrer" aria-label="WhatsApp"><WhatsAppIcon size={21} /></a>
-              <a href={`tel:+${WHATSAPP_NUMBER}`} aria-label="Call us"><Phone size={18} /></a>
-              <a href="https://maps.google.com/?q=Main+Korangi+Industrial+Road+Landhi+Karachi" target="_blank" rel="noreferrer" aria-label="Find us on the map"><MapPin size={19} /></a>
-            </div>
-          </div>
-          <div>
-            <h6>Explore</h6>
-            <nav className="footer-links">
-              <button onClick={() => scrollToId('menu')}>View menu</button>
-              <button onClick={() => setOrdersOpen(true)}>My orders</button>
-              <button onClick={() => setLocationGateOpen(true)}>Delivery areas</button>
-              <button onClick={() => scrollToId('about')}>About us</button>
-            </nav>
-          </div>
-          <div>
-            <h6>Contact</h6>
-            <div className="footer-contact">
-              <span className="contact-icon"><MapPin size={18} /></span><p>K 19/14 Main Korangi Industrial Road, Sherabad Colony, Landhi Town, Karachi.</p>
-              <span className="contact-icon"><Phone size={18} /></span><a className="strong" href={`tel:+${WHATSAPP_NUMBER}`}>0311-2558691</a>
-              <span className="contact-icon"><Clock3 size={18} /></span><p>Open daily · 11:00 AM — 2:00 AM</p>
-            </div>
-          </div>
-          <div>
-            <h6>Order Online</h6>
-            <p className="footer-note">Cash on delivery across Karachi, or pick up from our Korangi kitchen.</p>
-            <button className="footer-order" onClick={() => scrollToId('menu')}><span>View full menu</span><b>Order</b></button>
-          </div>
-        </div>
-        <div className="footer-bottom">
-          <span><i className="live-dot" />© 2026 United Biryani. All rights reserved</span>
-          <span>Powered by <a href="https://thedigitalcreativity.com" target="_blank" rel="noreferrer">The Digital Creativity</a></span>
-        </div>
-      </footer>
     </div>
+
+    <footer className="footer" id="contact">
+      <div className="footer-grid">
+        <div className="footer-brand">
+          <img src={whiteLogo} alt="United Biryani" />
+          <p>Karachi's signature biryani, BBQ and fast food. Freshly cooked and delivered hot, straight to your doorstep.</p>
+          <div className="footer-socials">
+            <a href={`https://wa.me/${WHATSAPP_NUMBER}`} target="_blank" rel="noreferrer" aria-label="WhatsApp"><WhatsAppIcon size={21} /></a>
+            <a href={`tel:+${WHATSAPP_NUMBER}`} aria-label="Call us"><Phone size={18} /></a>
+            <a href="https://maps.google.com/?q=Main+Korangi+Industrial+Road+Landhi+Karachi" target="_blank" rel="noreferrer" aria-label="Find us on the map"><MapPin size={19} /></a>
+          </div>
+        </div>
+        <div>
+          <h6>Explore</h6>
+          <nav className="footer-links">
+            <button onClick={() => scrollToId('menu')}>View menu</button>
+            <button onClick={() => setOrdersOpen(true)}>My orders</button>
+            <button onClick={() => setLocationGateOpen(true)}>Delivery areas</button>
+            <button onClick={() => scrollToId('about')}>About us</button>
+          </nav>
+        </div>
+        <div>
+          <h6>Contact</h6>
+          <div className="footer-contact">
+            <span className="contact-icon"><MapPin size={18} /></span><p>K 19/14 Main Korangi Industrial Road, Sherabad Colony, Landhi Town, Karachi.</p>
+            <span className="contact-icon"><Phone size={18} /></span><a className="strong" href={`tel:+${WHATSAPP_NUMBER}`}>0311-2558691</a>
+            <span className="contact-icon"><Clock3 size={18} /></span><p>Open daily · 11:00 AM — 2:00 AM</p>
+          </div>
+        </div>
+        <div>
+          <h6>Order Online</h6>
+          <p className="footer-note">Cash on delivery across Karachi, or pick up from our Korangi kitchen.</p>
+          <button className="footer-order" onClick={() => scrollToId('menu')}><span>View full menu</span><b>Order</b></button>
+        </div>
+      </div>
+      <div className="footer-bottom">
+        <span><i className="live-dot" />© 2026 United Biryani. All rights reserved</span>
+        <span>Powered by <a href="https://thedigitalcreativity.com" target="_blank" rel="noreferrer">The Digital Creativity</a></span>
+      </div>
+    </footer>
 
     {cartBarVisible && <button className="view-cart-bar" onClick={() => setCartOpen(true)}><span className="view-cart-count">{itemCount}</span><b>View Cart</b><b>{money(subtotal)}</b></button>}
     {sideMenuOpen && <SideMenu close={() => setSideMenuOpen(false)} sections={sections} jumpTo={jumpTo} openOrders={() => setOrdersOpen(true)} openLocation={() => setLocationGateOpen(true)} openCart={() => setCartOpen(true)} scrollToId={scrollToId} itemCount={itemCount} />}
