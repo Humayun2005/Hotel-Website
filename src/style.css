@@ -180,6 +180,23 @@ main { padding-bottom: 20px }
 .card-stepper { display: flex; align-items: center; gap: 10px }
 .card-stepper button { width: 32px; height: 32px; border-radius: 50%; background: var(--primary); color: #fff; display: grid; place-items: center }
 .card-stepper b { min-width: 16px; text-align: center; font-weight: 600; font-size: 17px }
+.card-img { position: relative; background: #f4efe9 }
+.card-img img, .item-img img, .cart-img img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .5s }
+.menu-card:hover .card-img img { transform: scale(1.07) }
+.img-fallback { font-size: 64px }
+.card-img .card-badge { filter: none; transform: none; line-height: 1.2; white-space: nowrap }
+.card-badge { position: absolute; left: 8px; top: 8px; background: var(--primary); color: #fff; font-size: 11px !important; font-weight: 700; padding: 4px 8px; border-radius: 8px; box-shadow: 0 4px 10px #ed1c2440 }
+.card-sizes { display: flex; flex-wrap: wrap; gap: 5px; margin: -6px 0 12px }
+.card-sizes span { font-size: 11px; font-weight: 600; color: var(--primary); background: var(--primary-soft); padding: 3px 8px; border-radius: 20px; white-space: nowrap }
+.price { display: inline-flex; flex-wrap: wrap; align-items: baseline; column-gap: 4px }
+.price small, .price s { white-space: nowrap }
+.price small { font-family: 'Poppins', sans-serif; font-size: 12px; font-weight: 500; color: var(--muted) }
+.price s, .item-left h5 s { margin-left: 8px; font-size: 13px; font-weight: 500; color: #999 }
+.icon-btn-count { font-size: 14px }
+.item-img { overflow: hidden }
+.cart-img { overflow: hidden; padding: 0 }
+.item-options { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; margin-bottom: 30px }
+.item-options .item-option { width: auto; margin: 0; cursor: pointer }
 .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); display: grid; justify-items: center; gap: 14px }
 
 /* Shared section container below the menu */

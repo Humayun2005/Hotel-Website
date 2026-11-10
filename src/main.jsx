@@ -1,4 +1,4 @@
-import { StrictMode, useEffect, useMemo, useRef, useState } from 'react'
+﻿import { StrictMode, useEffect, useMemo, useRef, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { z } from 'zod'
 import {
@@ -14,6 +14,8 @@ import karahiPhoto from './assets/hero/karahi.jpg'
 import burgerPhoto from './assets/hero/burger.jpg'
 import pizzaPhoto from './assets/hero/pizza.jpg'
 import biryaniBowlPhoto from './assets/hero/biryani-bowl.jpg'
+import { categories as categoryList, menu, startingPrice } from './menuData.js'
+import { menuImages } from './menuImages.js'
 
 const WHATSAPP_NUMBER = '923112558691'
 const checkoutSchema = z.object({
@@ -30,47 +32,15 @@ const checkoutSchema = z.object({
     if (!details.address.trim()) context.addIssue({ code: z.ZodIssueCode.custom, path: ['address'], message: 'Delivery address is required' })
   }
 })
-const categories = ['Biryani', 'Pulao', 'Burgers', 'Sandwiches', 'BBQ', 'Broast', 'Appetizers', 'Pasta', 'Lasagna', 'Pakistani Curries', 'Chinese', 'Soups', 'Pizza', 'Fries', 'Sides', 'Drinks', 'Bread', 'Dips']
-const categoryIcons = { Biryani: '🍛', Pulao: '🥘', Burgers: '🍔', Sandwiches: '🥪', BBQ: '🍢', Broast: '🍗', Appetizers: '🥟', Pasta: '🍝', Lasagna: '🍲', 'Pakistani Curries': '🍲', Chinese: '🥡', Soups: '🥣', Pizza: '🍕', Fries: '🍟', Sides: '🍽️', Drinks: '🥤', Bread: '🫓', Dips: '🥣' }
 const deliveryZones = [
   ['Tree of Life School / Arsalan School', 60], ['Asifa Aftab School / Iqra School', 60], ['K Area Market / Taj School / Pakora Street', 80], ['J1 Area / Madni Masjid / APWA School', 80], ['Darul Uloom', 70], ['Darul Uloom Basti / J Area Firdous Masjid', 90], ['Burmi Colony / Safaid Masjid', 80], ['Shareef Colony / Imran Sweets', 90], ['36/B Double Road', 90], ['Ghosia Food / Baboo Arain Sweets', 100], ['36/B Double Road National School', 100], ['Mahad Madarsa / 36/B Kiran Bakery', 100], ['Noor Masjid / Atta Ka Thalla', 100], ['36/B Rehmania Masjid / Eid Gah Ground', 100], ['Zamanabad Karachi City School', 130], ['Zamanabad 37/A Sheriya Masjid', 150], ['Memon Institute / Habib Pakwan', 100], ['Area 36/C / Civic Center', 120], ['Landhi 6 / Farooqi Masjid', 110], ['Adnan Medical / JIQ Hospital', 120], ['Shahi Masjid / Master Biryani', 120], ['Bismillah Masjid / Landhi 6 Nagori', 120], ['Khwaja Chowrangi / Hammad Bhai Street', 120], ['L6 Afaq Bhai Street / Ibrahim Machakki', 130], ['Landhi Chiragh Hotel', 150], ['Landhi 4 Police Station Backside', 160], ['Landhi Babar Market', 190], ['Pakitek Ismail Goth Qabristan', 150], ['Landhi Party Fast Food', 220], ['Farooq Villas', 230], ['Khaddi Stop / Ali Hotel / Mughal House', 80], ['Zaman Town Tanzeem Floor Mills', 90], ['Zaman Town Millan / Owais Park', 100], ['Zaman Town Iqra School / Compound', 110], ['Zaman Town Gulshan-e-Muhammadi', 130], ['Kabaddi Ground / Rehan College', 120], ['Labour Square 34/3 Food Qabila', 120], ['Kallu Chowk Around', 110], ['Kamran Autos / Polytechnical', 130], ['Sector 34/2 Kalwa Hotel', 140], ['Korangi 4 / King Broast Area', 120], ['Korangi 4 Police Station / Rent A Car', 130], ['Korangi 5 F Area / Opp Park', 140], ['Civic Center Backside', 120], ['KPS School Korangi 5.5 / Kallu Tyre', 160], ['Rajputana Hospital / Korangi 2.5', 170], ['Korangi 2.5 / Gharib Nawaz Stop', 170], ['Korangi 1.5 / 32-B Labour Square', 180], ['Korangi 1 / 32-B Firdous Masjid', 200], ['LRBT Hospital', 180], ['50-A Madina Colony / Coast Guard', 200], ['Al-Mustafa Trust / TCF School / Chungi', 220], ['Pappan Chowk / Universal Town', 230], ['Nasir Colony / Zia Colony', 180], ['Chakra Goth / Nasir Jump', 200], ['Bhitai Colony', 230], ['Korangi Creek', 250], ['Sharafi Goth / United Towel', 100], ['Sharafi Goth UC Office', 110], ['Muhammad City / Shah Ali Goth', 200], ['Murtuza Baloch Pan Shop', 100], ['Hussain Shaheed Society Murtuza', 150], ['Mansehra Dildar Hotel', 200], ['Future More / Al-Jannat Restaurant', 200], ['Dawood Chowrangi / Zafar Hospital', 230], ['Awami Colony', 100], ['Awami Colony Power House', 110], ['Bagh-e-Korangi Rado Bakery', 160], ['Bagh-e-Korangi Sector 10 Rado Street', 170], ['Sector 10 Millat / Baloch House', 180], ['Bagh-e-Korangi Qabristan / Hafta Bazar', 180], ['Bagh-e-Korangi Madni / Al-Hamra City', 200], ['Saima Luxury Homes', 200], ['Bilal Chowrangi Dak Khana', 150], ['Lucknow Society / P&T Society', 220], ['Ghospak Road 17-K Stop', 180], ['100 Quarters', 220], ['Korangi 6 Girls College', 180], ['51-C Aqil Sweets to Astana', 145], ['Ilyas Goth', 230], ['Jumma Goth Muneem Clinic', 220], ['Gul Ahmed Gate No 8', 280], ['Rizwan Sweets / Landhi 1-D', 220], ['Mansehra Aziz Medical', 170], ['Artistic Denim Mills / Shan Chowrangi', 170], ['Nasir Colony Chishtiya / Babu Hotel', 200], ['Coast Guard W22 Stop', 200], ['Pakistan Safety Glass', 100], ['Getz Pharma / Indus Pharma Singer', 100], ['Naveena Textile / J. Head Office', 100], ['Karachi Paper Mill / Nelson Paints', 100], ['Rujby Waghning / Denim E', 100], ['Razi & Sons / Opp Mahad Madarsa', 100], ['DIC Bulle Shah Packages / Habib Knits', 100], ['Healthtech Awami / Rujby Headoffice', 100], ['Martin Dow Pharma / Herbion Pharma', 100], ['AGI K2 / International / Aspin / Abbott', 110], ['Bykiya Company / Silver Textile Bilal', 150], ['Pie in the Sky / AM14 Bilal Chowrangi', 150], ['AM4 / Reflection Vita Chowrangi', 160], ['Synergies Sourcing / Getz Vita Chowrangi', 160], ['Soorty Unit 9 / Mehran Foods', 180], ['National Oil Refinery / Vita Chowrangi', 190], ['Opal Laboratories / AFM4 Murtuza', 170], ['AM16 / Herbion Pharma Future More', 200], ['Hilton Pharma Godam Chowrangi', 220], ['Sailani K Samne Area Godam Chowrangi', 220], ['Gulzar Colony', 180], ['Mehran Town', 220], ['Shah Faisal No 2300', 230], ['Hospital Chowrangi', 400], ['Nazimabad', 800], ['Other Karachi area (fee confirmed on WhatsApp)', 250],
 ]
 const getDeliveryFee = (zone) => deliveryZones.find(([name]) => name === zone)?.[1] || 250
-const getPrimaryCategory = (dish) => {
-  const name = dish.name.toLowerCase()
-  if (name.includes('biryani')) return 'Biryani'
-  if (name.includes('pulao')) return 'Pulao'
-  if (name.includes('lasagna')) return 'Lasagna'
-  if (name.includes('pasta')) return 'Pasta'
-  if (name.includes('pizza')) return 'Pizza'
-  if (name.includes('burger')) return 'Burgers'
-  if (name.includes('sandwich')) return 'Sandwiches'
-  if (name.includes('broast')) return 'Broast'
-  if (name.includes('soup')) return 'Soups'
-  if (name.includes('fries')) return 'Fries'
-  if (name.includes('naan') || name.includes('chapati') || name === 'nan') return 'Bread'
-  if (name.includes('dip')) return 'Dips'
-  if (dish.category === 'Drinks') return 'Drinks'
-  if (dish.category === 'Chinese') return 'Chinese'
-  if (dish.category === 'Pakistani') return 'Pakistani Curries'
-  if (['tikka', 'boti', 'kabab', 'shashlik', 'wings', 'nuggets', 'strips'].some((word) => name.includes(word))) return 'BBQ'
-  if (['roll', 'stick', 'spring'].some((word) => name.includes(word))) return 'Appetizers'
-  return dish.category
-}
+const categories = categoryList.map((category) => category.name)
+const categoryIcons = Object.fromEntries(categoryList.map((category) => [category.name, category.icon]))
+const sectionMeta = Object.fromEntries(categoryList.map((category) => [category.name, [category.eyebrow, category.title]]))
 const sectionId = (category) => `cat-${category.toLowerCase().replace(/[^a-z]+/g, '-')}`
 
-const item = (id, category, name, price, image = '🍽️', description = 'Freshly prepared to order in our Karachi kitchen.') => ({ id, category, name, price, image, description, tag: '' })
-const menu = [
-  item(1, 'Biryani', 'Beef Biryani (Full Plate)', 440, '🍛'), item(2, 'Biryani', 'Chicken Biryani (Full Plate)', 440, '🍛'), item(3, 'Biryani', 'Mutton Biryani (Full Plate)', 480, '🍛'), item(4, 'Biryani', 'Behari Boti Biryani', 460, '🍛'), item(5, 'Biryani', 'Seekh Kabab Biryani', 400, '🍛'), item(6, 'Biryani', 'Chicken Tikka Biryani', 450, '🍛'), item(7, 'Biryani', 'Chicken Tikka Leg Biryani', 370, '🍛'), item(8, 'Biryani', 'Gola Kabab Biryani', 450, '🍛'), item(9, 'Biryani', 'Reshmi Kabab Biryani', 450, '🍛'), item(10, 'Biryani', 'Malai Tikka Biryani', 490, '🍛'), item(11, 'Biryani', 'Beef Boti Biryani (Half Plate)', 220, '🍛'), item(12, 'Biryani', 'Chicken Boti Biryani (Half Plate)', 220, '🍛'), item(13, 'Biryani', 'Malai Boti Biryani (Half Plate)', 240, '🍛'), item(14, 'Biryani', 'Behari Boti Biryani (Half Plate)', 230, '🍛'), item(15, 'Biryani', 'Seekh Kabab Biryani (Half Plate)', 200, '🍛'),
-  item(16, 'Biryani', 'Beef Biryani (375g)', 250, '🥘'), item(17, 'Biryani', 'Chicken Biryani (375g)', 240, '🥘'), item(18, 'Biryani', 'Beef Pulao (Half Plate)', 280, '🥘'), item(19, 'Biryani', 'Beef Pulao (Full Plate)', 340, '🥘'), item(20, 'Biryani', 'Chicken Pulao (Full Plate)', 320, '🥘'), item(21, 'Biryani', 'Beef Pulao (1kg)', 380, '🥘'), item(22, 'Biryani', 'Beef Biryani (1kg)', 680, '🥘'), item(23, 'Biryani', 'Chicken Biryani (1kg)', 640, '🥘'), item(24, 'Biryani', 'Beef Pulao (1kg Family)', 760, '🥘'), item(25, 'Biryani', 'Simple Biryani (1kg)', 360, '🥘'),
-  item(26, 'Burgers', 'Beef Boti Burger', 440, '🍔'), item(27, 'Burgers', 'Chicken Boti Burger', 440, '🍔'), item(28, 'Burgers', 'Malai Boti Burger', 480, '🍔'), item(29, 'Burgers', 'Behari Boti Burger', 460, '🍔'), item(30, 'Burgers', 'Seekh Kabab Burger', 400, '🍔'), item(31, 'Burgers', 'Chicken Cheese Burger', 450, '🍔'), item(32, 'Burgers', 'Chicken Tikka Burger', 370, '🍔'), item(33, 'Burgers', 'Gola Kabab Burger', 450, '🍔'), item(34, 'Burgers', 'Reshmi Kabab Burger', 450, '🍔'), item(35, 'Burgers', 'Zinger Burger', 490, '🍔'), item(36, 'Burgers', 'Junior Zinger Burger', 300, '🍔'), item(37, 'Burgers', 'United Albaik Broast', 500, '🍗'), item(38, 'Burgers', 'Supreme Club Sandwich', 420, '🥪'),
-  item(39, 'BBQ & Fast Food', 'Chicken Tikka', 450, '🍢'), item(40, 'BBQ & Fast Food', 'Chicken Boti', 400, '🍢'), item(41, 'BBQ & Fast Food', 'Malai Boti', 450, '🍢'), item(42, 'BBQ & Fast Food', 'Behari Boti', 400, '🍢'), item(43, 'BBQ & Fast Food', 'Chicken Seekh Kabab', 390, '🍢'), item(44, 'BBQ & Fast Food', 'Beef Seekh Kabab', 440, '🍢'), item(45, 'BBQ & Fast Food', 'Chicken Gola Kabab', 400, '🍢'), item(46, 'BBQ & Fast Food', 'Chicken Reshmi Kabab', 420, '🍢'), item(47, 'BBQ & Fast Food', 'Chicken Cheese Kabab', 500, '🍢'), item(48, 'BBQ & Fast Food', 'Chicken Nuggets', 520, '🍗'), item(49, 'BBQ & Fast Food', 'Chicken Wings', 470, '🍗'), item(50, 'BBQ & Fast Food', 'Dynamite Chicken', 550, '🍗'), item(51, 'BBQ & Fast Food', 'Chicken Broast', 480, '🍗'), item(52, 'BBQ & Fast Food', 'Chicken Strips', 420, '🍗'),
-  item(53, 'Pakistani', 'Chicken Shashlik with Rice', 600, '🍲'), item(54, 'Pakistani', 'Chicken Chowmein', 400, '🍜'), item(55, 'Pakistani', 'Chicken Manchurian with Rice', 600, '🍲'), item(56, 'Pakistani', 'Chicken White Handi', 950, '🍲'), item(57, 'Pakistani', 'Chicken Karahi', 900, '🍲'), item(58, 'Pakistani', 'Mutton Karahi', 1450, '🍲'), item(59, 'Pakistani', 'Beef Qorma', 380, '🥘'), item(60, 'Pakistani', 'Chicken Qorma', 370, '🥘'), item(61, 'Pakistani', 'Chicken White Karahi', 1200, '🍲'), item(62, 'Pakistani', 'Achar Gosht', 400, '🍲'), item(63, 'Pakistani', 'Daal Mash', 180, '🥘'), item(64, 'Pakistani', 'Daal Chana', 170, '🥘'), item(65, 'Pakistani', 'Mix Vegetable', 170, '🥗'),
-  item(66, 'Chinese', 'Chicken Fried Rice', 420, '🍚'), item(67, 'Chinese', 'Chicken Manchurian', 600, '🍲'), item(68, 'Chinese', 'Chicken Chowmein', 400, '🍜'), item(69, 'Chinese', 'Chicken Sweet & Sour', 500, '🍲'), item(70, 'Chinese', 'Chicken Shashlik', 400, '🍢'), item(71, 'Chinese', 'Chicken Spring Rolls', 200, '🥟'), item(72, 'Chinese', 'Chicken Corn Soup', 250, '🍲'), item(73, 'Chinese', 'Hot & Sour Soup', 250, '🍲'),
-  item(74, 'Pizza', 'Chicken Tikka Pizza - Small', 400, '🍕'), item(75, 'Pizza', 'Chicken Tikka Pizza - Regular', 750, '🍕'), item(76, 'Pizza', 'Chicken Tikka Pizza - Large', 1150, '🍕'), item(77, 'Pizza', 'Chicken Fajita Pizza - Small', 400, '🍕'), item(78, 'Pizza', 'Chicken Fajita Pizza - Regular', 750, '🍕'), item(79, 'Pizza', 'Chicken Fajita Pizza - Large', 1150, '🍕'), item(80, 'Pizza', 'Malai Boti Pizza - Small', 430, '🍕'), item(81, 'Pizza', 'Malai Boti Pizza - Regular', 780, '🍕'), item(82, 'Pizza', 'Malai Boti Pizza - Large', 1250, '🍕'), item(83, 'Pizza', 'Afghani Pizza - Small', 400, '🍕'), item(84, 'Pizza', 'Afghani Pizza - Regular', 750, '🍕'), item(85, 'Pizza', 'Afghani Pizza - Large', 1150, '🍕'), item(86, 'Pizza', 'Cheesy Lover Pizza - Small', 400, '🍕'), item(87, 'Pizza', 'Cheesy Lover Pizza - Regular', 770, '🍕'), item(88, 'Pizza', 'Cheesy Lover Pizza - Large', 1200, '🍕'), item(89, 'Pizza', 'Seekh Kabab Pizza - Small', 450, '🍕'), item(90, 'Pizza', 'Seekh Kabab Pizza - Regular', 800, '🍕'), item(91, 'Pizza', 'Seekh Kabab Pizza - Large', 1250, '🍕'), item(92, 'Pizza', 'Chicken Pepperoni Pizza - Small', 400, '🍕'), item(93, 'Pizza', 'Chicken Pepperoni Pizza - Regular', 750, '🍕'), item(94, 'Pizza', 'Chicken Pepperoni Pizza - Large', 1150, '🍕'), item(95, 'Pizza', 'Beef Pepperoni Pizza - Small', 400, '🍕'), item(96, 'Pizza', 'Beef Pepperoni Pizza - Regular', 750, '🍕'), item(97, 'Pizza', 'Beef Pepperoni Pizza - Large', 1150, '🍕'), item(98, 'Pizza', 'Creamy Pizza - Small', 400, '🍕'), item(99, 'Pizza', 'Creamy Pizza - Regular', 750, '🍕'), item(100, 'Pizza', 'Creamy Pizza - Large', 1200, '🍕'), item(101, 'Pizza', 'Lava Pizza - Regular', 950, '🍕'), item(102, 'Pizza', 'Lava Pizza - Large', 1550, '🍕'), item(103, 'Pizza', 'United Special Pizza - Small', 450, '🍕'), item(104, 'Pizza', 'United Special Pizza - Regular', 850, '🍕'), item(105, 'Pizza', 'United Special Pizza - Large', 1300, '🍕'),
-  item(106, 'BBQ & Fast Food', 'Chicken Lasagna F2 Large', 600, '🍝'), item(107, 'BBQ & Fast Food', 'Chicken Lasagna F1 Small', 350, '🍝'), item(108, 'BBQ & Fast Food', 'Beef Lasagna F2 Large', 650, '🍝'), item(109, 'BBQ & Fast Food', 'Creamy Pasta F2 Large', 600, '🍝'), item(110, 'BBQ & Fast Food', 'Creamy Pasta F1 Small', 350, '🍝'), item(111, 'BBQ & Fast Food', 'Malai Pizza Burger', 380, '🍔'), item(112, 'BBQ & Fast Food', 'Spicy Pasta F2 Large', 550, '🍝'), item(113, 'BBQ & Fast Food', 'Spicy Pasta F1 Small', 300, '🍝'), item(114, 'BBQ & Fast Food', 'Cheezy Pasta F2 Large', 600, '🍝'), item(115, 'BBQ & Fast Food', 'Cheezy Pasta F1 Small', 350, '🍝'), item(116, 'BBQ & Fast Food', 'Pizza Roll', 350, '🌯'), item(117, 'BBQ & Fast Food', 'Cheezy Stick', 300, '🧀'), item(118, 'BBQ & Fast Food', 'Tikka Pizza Burger', 350, '🍔'), item(119, 'BBQ & Fast Food', 'Mexican Sandwich', 400, '🥪'), item(120, 'BBQ & Fast Food', 'Arabian Sandwich', 400, '🥪'),
-  item(121, 'Drinks', 'Pepsi 345ml', 70, '🥤'), item(122, 'Drinks', 'Pepsi 500ml', 90, '🥤'), item(123, 'Drinks', 'Pepsi 1.5 Liter', 170, '🥤'), item(124, 'Drinks', 'Pepsi 2.25 Liter', 220, '🥤'), item(125, 'Drinks', 'Mineral Water Small', 60, '💧'), item(126, 'Drinks', 'Mineral Water Large', 120, '💧'), item(127, 'Drinks', 'Sting 300ml', 110, '🥤'), item(128, 'Drinks', 'Sting 500ml', 130, '🥤'), item(129, 'Drinks', 'Nan', 25, '🫓'), item(130, 'Drinks', 'Chapati', 20, '🫓'), item(131, 'Drinks', 'Mayonnaise Dip', 50, '🥣'),
-]
 const heroSlides = [
   { image: biryaniPhoto, title: 'Dum Biryani', label: 'Biryani' },
   { image: bbqPhoto, title: 'Smoky BBQ', label: 'BBQ' },
@@ -79,22 +49,16 @@ const heroSlides = [
   { image: pizzaPhoto, title: 'Cheesy Pizza', label: 'Pizza' },
   { image: biryaniBowlPhoto, title: 'Chicken Pulao', label: 'Pulao' },
 ]
-const sectionMeta = {
-  Biryani: ["Karachi's signature", 'Biryani (Per Plate)'], Pulao: ['Slow cooked', 'Pulao & Rice'], Burgers: ['Stacked & loaded', 'Burgers'],
-  Sandwiches: ['Freshly toasted', 'Sandwiches'], BBQ: ['Straight off the coals', 'BBQ & Grill'], Broast: ['Crispy & golden', 'Broast'],
-  Appetizers: ['Little bites', 'Appetizers'], Pasta: ['Creamy & cheesy', 'Pasta'], Lasagna: ['Oven baked', 'Lasagna'],
-  'Pakistani Curries': ['Handi & karahi', 'Desi Food (Curries)'], Chinese: ['Wok tossed', 'Chinese'], Soups: ['Warm & comforting', 'Soups'],
-  Pizza: ['Fresh from the oven', 'Pizza'], Fries: ['Crispy sides', 'Fries'], Sides: ['Perfect pairing', 'Sides'], Drinks: ['Ice cold', 'Drinks'],
-  Bread: ['Fresh from the tandoor', 'Naan & Bread'], Dips: ['Extra flavour', 'Dips'],
-}
 const deliveryAreaCount = deliveryZones.length - 1
-const searchHints = ['chicken biryani', 'zinger burger', 'malai boti', 'chicken karahi', 'lava pizza']
+const searchHints = ['chicken biryani', 'bbq platter', 'zinger burger', 'malai boti', 'chicken karahi', 'lava pizza', 'nihari']
 
 const money = (value) => `Rs.${value.toLocaleString('en-PK')}`
 
 function App() {
   const [search, setSearch] = useState('')
-  const [cart, setCart] = useState(() => JSON.parse(localStorage.getItem('united-cart') || '[]'))
+  const [cart, setCart] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('united-cart-v2') || '[]') } catch { return [] }
+  })
   const [history, setHistory] = useState(() => JSON.parse(localStorage.getItem('united-orders') || '[]'))
   const [cartOpen, setCartOpen] = useState(false)
   const [checkoutOpen, setCheckoutOpen] = useState(false)
@@ -112,12 +76,12 @@ function App() {
     return !savedMode || (savedMode === 'delivery' && !savedDestination)
   })
 
-  useEffect(() => localStorage.setItem('united-cart', JSON.stringify(cart)), [cart])
+  useEffect(() => { localStorage.setItem('united-cart-v2', JSON.stringify(cart)); localStorage.removeItem('united-cart') }, [cart])
   useEffect(() => localStorage.setItem('united-orders', JSON.stringify(history)), [history])
 
   const sections = useMemo(() => categories.map((category) => ({
     category,
-    items: menu.filter((dish) => getPrimaryCategory(dish) === category && `${dish.name} ${dish.description}`.toLowerCase().includes(search.toLowerCase())),
+    items: menu.filter((dish) => dish.cat === category && `${dish.name} ${dish.desc} ${category}`.toLowerCase().includes(search.trim().toLowerCase())),
   })).filter((section) => section.items.length), [search])
 
   useEffect(() => {
@@ -140,30 +104,36 @@ function App() {
   const subtotal = cart.reduce((sum, entry) => sum + entry.price * entry.quantity, 0)
   const deliveryFee = orderMode === 'delivery' ? getDeliveryFee(destination) : 0
   const grandTotal = subtotal + deliveryFee
-  const quantityOf = (id) => cart.find((entry) => entry.id === id)?.quantity || 0
+  const quantityOf = (id) => cart.filter((entry) => entry.id === id).reduce((sum, entry) => sum + entry.quantity, 0)
 
   const notify = (message) => {
     setToast(message)
     window.setTimeout(() => setToast(''), 2400)
   }
 
-  const addToCart = (dish, quantity = 1, specialInstructions = '') => {
+  // One cart line per dish + size/portion; the variant label is shown and sent with the order.
+  const addToCart = (dish, variant = dish.variants[0], quantity = 1, specialInstructions = '') => {
+    const key = `${dish.id}:${variant.label}`
+    const label = dish.variants.length > 1 ? `${dish.name} (${variant.label})` : dish.name
     setCart((current) => {
-      const found = current.find((entry) => entry.id === dish.id)
-      return found ? current.map((entry) => entry.id === dish.id ? { ...entry, quantity: entry.quantity + quantity, specialInstructions: specialInstructions || entry.specialInstructions } : entry) : [...current, { ...dish, quantity, specialInstructions }]
+      const found = current.find((entry) => entry.key === key)
+      return found
+        ? current.map((entry) => entry.key === key ? { ...entry, quantity: entry.quantity + quantity, specialInstructions: specialInstructions || entry.specialInstructions } : entry)
+        : [...current, { key, id: dish.id, name: label, price: variant.price, img: dish.img, quantity, specialInstructions }]
     })
     setSelectedItem(null)
-    notify(`${dish.name} added to cart`)
+    notify(`${label} added to cart`)
   }
 
-  const updateQuantity = (id, amount) => setCart((current) => current.map((entry) => entry.id === id ? { ...entry, quantity: entry.quantity + amount } : entry).filter((entry) => entry.quantity > 0))
+  const updateQuantity = (key, amount) => setCart((current) => current.map((entry) => entry.key === key ? { ...entry, quantity: entry.quantity + amount } : entry).filter((entry) => entry.quantity > 0))
+  const singleKey = (dish) => `${dish.id}:${dish.variants[0].label}`
 
   const placeOrder = (details) => {
     const orderDeliveryFee = details.type === 'delivery' ? getDeliveryFee(details.destination || destination) : 0
     const orderTotal = subtotal + orderDeliveryFee
     const order = { id: `UB-${Date.now().toString().slice(-6)}`, date: new Date().toLocaleDateString('en-PK'), items: cart, total: orderTotal, ...details }
-    const lines = cart.map((entry) => `• ${entry.name}\n  Quantity: ${entry.quantity}\n  Price: ${money(entry.price * entry.quantity)}${entry.specialInstructions ? `\n  Special instructions: ${entry.specialInstructions}` : ''}`).join('\n\n')
-    const message = `*NEW ORDER — UNITED BIRYANI*
+    const lines = cart.map((entry) => `â€¢ ${entry.name}\n  Quantity: ${entry.quantity}\n  Price: ${money(entry.price * entry.quantity)}${entry.specialInstructions ? `\n  Special instructions: ${entry.specialInstructions}` : ''}`).join('\n\n')
+    const message = `*NEW ORDER â€” UNITED BIRYANI*
 
 *Order ID:* ${order.id}
 
@@ -238,10 +208,10 @@ Payment: Cash on delivery`
           {sections.map(({ category, items }, index) => <section className="menu-section" id={sectionId(category)} key={category}>
             <SectionHeading category={category} index={index} next={sections[index + 1]?.category} jumpTo={jumpTo} count={items.length} />
             <div className="menu-grid">
-              {items.map((dish) => <MenuCard key={dish.id} dish={dish} quantity={quantityOf(dish.id)} open={() => setSelectedItem(dish)} increase={() => addToCart(dish)} decrease={() => updateQuantity(dish.id, -1)} />)}
+              {items.map((dish) => <MenuCard key={dish.id} dish={dish} quantity={quantityOf(dish.id)} open={() => setSelectedItem(dish)} increase={() => addToCart(dish)} decrease={() => updateQuantity(singleKey(dish), -1)} />)}
             </div>
           </section>)}
-          {sections.length === 0 && <div className="empty-state"><Search size={34} /><p>No dishes found for “{search}”.</p><button className="btn-primary" onClick={() => setSearch('')}>Clear search</button></div>}
+          {sections.length === 0 && <div className="empty-state"><Search size={34} /><p>No dishes found for â€œ{search}â€.</p><button className="btn-primary" onClick={() => setSearch('')}>Clear search</button></div>}
         </div>
 
         <Features />
@@ -291,7 +261,7 @@ Payment: Cash on delivery`
           <div className="footer-contact">
             <span className="contact-icon"><MapPin size={18} /></span><p>K 19/14 Main Korangi Industrial Road, Sherabad Colony, Landhi Town, Karachi.</p>
             <span className="contact-icon"><Phone size={18} /></span><a className="strong" href={`tel:+${WHATSAPP_NUMBER}`}>0311-2558691</a>
-            <span className="contact-icon"><Clock3 size={18} /></span><p>Open daily · 11:00 AM — 2:00 AM</p>
+            <span className="contact-icon"><Clock3 size={18} /></span><p>Open daily Â· 11:00 AM â€” 2:00 AM</p>
           </div>
         </div>
         <div>
@@ -301,7 +271,7 @@ Payment: Cash on delivery`
         </div>
       </div>
       <div className="footer-bottom">
-        <span><i className="live-dot" />© 2026 United Biryani. All rights reserved</span>
+        <span><i className="live-dot" />Â© 2026 United Biryani. All rights reserved</span>
         <span>Powered by <a href="https://thedigitalcreativity.com" target="_blank" rel="noreferrer">The Digital Creativity</a></span>
       </div>
     </footer>
@@ -516,17 +486,28 @@ function SearchBar({ search, setSearch }) {
   </section>
 }
 
+function DishImage({ img, alt, eager = false }) {
+  const src = menuImages[img]
+  return src ? <img src={src} alt={alt} loading={eager ? 'eager' : 'lazy'} decoding="async" /> : <span className="img-fallback">🍽️</span>
+}
+
 function MenuCard({ dish, quantity, open, increase, decrease }) {
+  const multi = dish.variants.length > 1
+  const first = dish.variants[0]
   return <article className="menu-card" onClick={open}>
-    <div className="card-img"><span>{dish.image}</span></div>
+    <div className="card-img">
+      <DishImage img={dish.img} alt={dish.name} />
+      {first.was && <span className="card-badge">Save {money(first.was - first.price)}</span>}
+    </div>
     <div className="card-content">
       <h4>{dish.name}</h4>
-      <p>{dish.description}</p>
+      <p>{dish.desc}</p>
+      {multi && <div className="card-sizes">{dish.variants.map((variant) => <span key={variant.label}>{variant.label}</span>)}</div>}
       <div className="card-footer">
-        <span className="price">{money(dish.price)}</span>
-        {quantity > 0
+        <span className="price">{multi && <small>From </small>}{money(startingPrice(dish))}{!multi && first.label !== 'Regular' && <small> / {first.label}</small>}{first.was && !multi && <s>{money(first.was)}</s>}</span>
+        {quantity > 0 && !multi
           ? <div className="card-stepper" onClick={(event) => event.stopPropagation()}><button onClick={decrease} aria-label="Decrease">{quantity === 1 ? <Trash2 size={14} /> : <Minus size={14} />}</button><b>{quantity}</b><button onClick={increase} aria-label="Increase"><Plus size={14} /></button></div>
-          : <button className="icon-btn" onClick={(event) => { event.stopPropagation(); open() }} aria-label={`Add ${dish.name}`}><ShoppingCart size={15} /></button>}
+          : <button className="icon-btn" onClick={(event) => { event.stopPropagation(); open() }} aria-label={`Add ${dish.name}`}>{quantity > 0 ? <b className="icon-btn-count">{quantity}</b> : <ShoppingCart size={15} />}</button>}
       </div>
     </div>
   </article>
@@ -593,26 +574,33 @@ function LocationGate({ mode, destination, chooseMode, chooseDestination, close,
 
 function ProductModal({ item: dish, close, add }) {
   const [quantity, setQuantity] = useState(1)
+  const [variant, setVariant] = useState(dish.variants[0])
   const [specialInstructions, setSpecialInstructions] = useState('')
+  const multi = dish.variants.length > 1
   return <div className="overlay center" onMouseDown={close}>
     <div className="item-modal" onMouseDown={(event) => event.stopPropagation()}>
       <div className="item-modal-close"><button className="round-btn" onClick={close} aria-label="Close"><X size={16} /></button></div>
       <div className="item-modal-body">
         <div className="item-left">
-          <div className="item-img"><span>{dish.image}</span></div>
+          <div className="item-img"><DishImage img={dish.img} alt={dish.name} eager /></div>
           <h3>{dish.name}</h3>
-          <h5>{money(dish.price)}</h5>
-          <p>{dish.description}</p>
+          <h5>{money(variant.price)}{variant.was && <s>{money(variant.was)}</s>}</h5>
+          <p>{dish.desc}</p>
         </div>
         <div className="item-right">
-          <h6>Select Option</h6>
-          <label className="item-option selected"><span><input type="radio" checked readOnly /> Regular</span><span>{money(dish.price)}</span></label>
+          <h6>{multi ? 'Select Size / Portion' : 'Option'}</h6>
+          <div className="item-options">
+            {dish.variants.map((option) => <label key={option.label} className={`item-option${option.label === variant.label ? ' selected' : ''}`}>
+              <span><input type="radio" name="variant" checked={option.label === variant.label} onChange={() => setVariant(option)} /> {option.label}</span>
+              <span>{money(option.price)}</span>
+            </label>)}
+          </div>
           <label className="item-field">Special Instructions<textarea rows="3" value={specialInstructions} onChange={(event) => setSpecialInstructions(event.target.value)} placeholder="Please enter instructions about this item" /></label>
         </div>
       </div>
       <div className="item-modal-footer">
         <div className="counter"><button onClick={() => setQuantity(Math.max(1, quantity - 1))} aria-label="Decrease"><Minus size={16} /></button><input readOnly value={quantity} aria-label="Quantity" /><button onClick={() => setQuantity(quantity + 1)} aria-label="Increase"><Plus size={16} /></button></div>
-        <button className="btn-primary" onClick={() => add(dish, quantity, specialInstructions)}>Add to Cart - {money(dish.price * quantity)}</button>
+        <button className="btn-primary" onClick={() => add(dish, variant, quantity, specialInstructions)}>Add to Cart - {money(variant.price * quantity)}</button>
       </div>
     </div>
   </div>
@@ -626,10 +614,10 @@ function CartDrawer({ cart, subtotal, deliveryFee, grandTotal, updateQuantity, c
         <div>{cart.length > 0 && <button className="clear-cart" onClick={clearCart}>Clear Cart</button>}<button className="round-btn" onClick={close} aria-label="Close cart"><X size={16} /></button></div>
       </div>
       {cart.length ? <div className="cart-body">
-        {cart.map((entry) => <div className="cart-item" key={entry.id}>
-          <span className="cart-img">{entry.image}</span>
+        {cart.map((entry) => <div className="cart-item" key={entry.key}>
+          <span className="cart-img"><DishImage img={entry.img} alt="" /></span>
           <div className="cart-copy"><span>{entry.name}</span>{entry.specialInstructions && <small>{entry.specialInstructions}</small>}<b>{money(entry.price)}</b></div>
-          <div className="cart-stepper"><button onClick={() => updateQuantity(entry.id, -1)} aria-label="Decrease">{entry.quantity === 1 ? <Trash2 size={13} className="trash" /> : <Minus size={13} />}</button><span>{entry.quantity}</span><button onClick={() => updateQuantity(entry.id, 1)} aria-label="Increase"><Plus size={13} /></button></div>
+          <div className="cart-stepper"><button onClick={() => updateQuantity(entry.key, -1)} aria-label="Decrease">{entry.quantity === 1 ? <Trash2 size={13} className="trash" /> : <Minus size={13} />}</button><span>{entry.quantity}</span><button onClick={() => updateQuantity(entry.key, 1)} aria-label="Increase"><Plus size={13} /></button></div>
         </div>)}
         <button className="add-more" onClick={close}><Plus size={16} /> Add More Items</button>
         {mode === 'delivery' && <label className="cart-area">Delivery area<LocationSearchSelect value={destination} onChange={chooseDestination} label="Search delivery area" /></label>}
@@ -688,7 +676,7 @@ function CheckoutModal({ total, deliveryFee, close, submit, mode, destination })
           <div><span>Delivery fee</span><span>{type === 'delivery' ? money(currentDeliveryFee) : 'Rs.0'}</span></div>
           <div className="grand"><span>Grand Total</span><span>{money(currentTotal)}</span></div>
         </div>
-        <div className="payment-row"><span className="cash-icon">₨</span><span><b>Cash on delivery</b><small>Pay when your order arrives</small></span><Check size={18} /></div>
+        <div className="payment-row"><span className="cash-icon">â‚¨</span><span><b>Cash on delivery</b><small>Pay when your order arrives</small></span><Check size={18} /></div>
       </div>
       <div className="checkout-foot">
         <button className="btn-primary full" disabled={!canSubmit} onClick={() => { if (validate()) submit({ ...details, type }) }}>Place Order</button>
@@ -703,7 +691,7 @@ function OrderHistory({ orders, close }) {
     <div className="checkout-modal history-modal" onMouseDown={(event) => event.stopPropagation()}>
       <div className="checkout-head"><h5>My Orders</h5><button className="round-btn" onClick={close} aria-label="Close"><X size={16} /></button></div>
       <div className="checkout-body">
-        {orders.length ? orders.map((order) => <div className="history-item" key={order.id}><div><b>{order.id}</b><small>{order.date} · {order.type === 'delivery' ? 'Delivery' : 'Pickup'}</small></div><b>{money(order.total)}</b></div>)
+        {orders.length ? orders.map((order) => <div className="history-item" key={order.id}><div><b>{order.id}</b><small>{order.date} Â· {order.type === 'delivery' ? 'Delivery' : 'Pickup'}</small></div><b>{money(order.total)}</b></div>)
           : <div className="cart-empty"><History size={40} /><b>No orders yet</b><span>Your recent orders will appear here on this device.</span></div>}
       </div>
     </div>
