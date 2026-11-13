@@ -16,8 +16,10 @@ import pizzaPhoto from './assets/hero/pizza.jpg'
 import biryaniBowlPhoto from './assets/hero/biryani-bowl.jpg'
 import { categories as categoryList, menu, startingPrice } from './menuData.js'
 import { menuImages } from './menuImages.js'
-import { RATE_PER_KM, MIN_FEE, MAX_KM, RESTAURANT, buildLocation, currentPosition, mapsLink, searchAddress } from './location.js'
-import { LoaderCircle, LocateFixed } from 'lucide-react'
+import { MAX_KM, RESTAURANT, buildLocation, currentPosition, mapsLink, searchAddress } from './location.js'
+import { LoaderCircle, LocateFixed, Mail } from 'lucide-react'
+
+const SUPPORT_EMAIL = 'unitedfastfood51@gmail.com'
 
 const WHATSAPP_NUMBER = '923112558691'
 const checkoutSchema = z.object({
@@ -151,7 +153,7 @@ Delivery fee: ${money(orderDeliveryFee)}
 
 *ORDER DETAILS*
 Order type: ${details.type === 'delivery' ? 'Delivery' : 'Pickup'}
-${details.type === 'delivery' && location ? `House / street: ${details.address}\nLocation: ${location.address}\nDistance: ${location.km} km (Rs ${RATE_PER_KM}/km)\nMap: ${mapsLink(location)}\n` : `Pickup from: ${RESTAURANT.address}\n`}
+${details.type === 'delivery' && location ? `House / street: ${details.address}\nLocation: ${location.address}\nDistance: ${location.km} km\nMap: ${mapsLink(location)}\n` : `Pickup from: ${RESTAURANT.address}\n`}
 *CUSTOMER DETAILS*
 Name: ${details.name}
 Phone: ${details.phone}
@@ -231,7 +233,7 @@ Payment: Cash on delivery`
             <p>United Biryani brings the warmth of Karachi's food streets to your doorstep. Fragrant biryani, smoky BBQ, desi karahi and fresh fast food, cooked to order in our Korangi kitchen and delivered hot across Karachi.</p>
             <div className="about-stats">
               <div><b><CountUp value={menu.length} suffix="+" /></b><span>Menu items</span></div>
-              <div><b>Rs <CountUp value={RATE_PER_KM} /></b><span>Delivery per km</span></div>
+              <div><b><CountUp value={categories.length} /></b><span>Menu categories</span></div>
               <div><b><CountUp value={100} suffix="%" /></b><span>Fresh ingredients</span></div>
             </div>
           </Reveal>
@@ -247,6 +249,7 @@ Payment: Cash on delivery`
           <div className="footer-socials">
             <a href={`https://wa.me/${WHATSAPP_NUMBER}`} target="_blank" rel="noreferrer" aria-label="WhatsApp"><WhatsAppIcon size={21} /></a>
             <a href={`tel:+${WHATSAPP_NUMBER}`} aria-label="Call us"><Phone size={18} /></a>
+            <a href={`mailto:${SUPPORT_EMAIL}`} aria-label="Email us"><Mail size={18} /></a>
             <a href="https://maps.google.com/?q=Main+Korangi+Industrial+Road+Landhi+Karachi" target="_blank" rel="noreferrer" aria-label="Find us on the map"><MapPin size={19} /></a>
           </div>
         </div>
@@ -264,6 +267,7 @@ Payment: Cash on delivery`
           <div className="footer-contact">
             <span className="contact-icon"><MapPin size={18} /></span><p>K 19/14 Main Korangi Industrial Road, Sherabad Colony, Landhi Town, Karachi.</p>
             <span className="contact-icon"><Phone size={18} /></span><a className="strong" href={`tel:+${WHATSAPP_NUMBER}`}>0311-2558691</a>
+            <span className="contact-icon"><Mail size={18} /></span><a className="email" href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Query - United Biryani')}`}>{SUPPORT_EMAIL}</a>
             <span className="contact-icon"><Clock3 size={18} /></span><p>Open daily · 11:00 AM — 2:00 AM</p>
           </div>
         </div>
@@ -421,6 +425,7 @@ function SideMenu({ close, sections, jumpTo, openOrders, openLocation, openCart,
         <button onClick={() => run(() => scrollToId('about'))}><Utensils size={19} /> About us</button>
         <a href={`tel:+${WHATSAPP_NUMBER}`}><Phone size={19} /> 0311-2558691</a>
         <a href={`https://wa.me/${WHATSAPP_NUMBER}`} target="_blank" rel="noreferrer"><WhatsAppIcon size={19} /> WhatsApp us</a>
+        <a href={`mailto:${SUPPORT_EMAIL}`}><Mail size={19} /> Email support</a>
       </nav>
       <p className="side-menu-label">Menu categories</p>
       <div className="side-menu-cats">{sections.map(({ category, items }) => <button key={category} onClick={() => run(() => jumpTo(category))}><span>{categoryIcons[category]}</span>{category}<small>{items.length}</small></button>)}</div>

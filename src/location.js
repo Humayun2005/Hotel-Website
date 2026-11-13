@@ -2,12 +2,19 @@
 // Address lookup uses OpenStreetMap Nominatim; road distance uses the public OSRM router.
 
 export const RESTAURANT = { lat: 24.8416037, lon: 67.1645468, address: 'K 19/14 Main Korangi Industrial Road, Sherabad Colony, Sector 36-A, Landhi Town, Karachi' }
-export const RATE_PER_KM = 30
-export const MIN_FEE = 50
+export const RATE_PER_KM = 30 // charged for every km beyond 4 km
+export const MIN_FEE = 80
 export const MAX_KM = 25
 
-// Rs 30 per km, rounded up to the next Rs 10, never below the minimum.
-export const feeForKm = (km) => Math.max(MIN_FEE, Math.ceil((km * RATE_PER_KM) / 10) * 10)
+// Distance slabs (road km): 0–1 Rs 80, 1–2 Rs 100, 2–3 Rs 140, 3–4 Rs 180,
+// then Rs 180 + Rs 30 per extra km, rounded up to the next Rs 10.
+export const feeForKm = (km) => {
+  if (km <= 1) return 80
+  if (km <= 2) return 100
+  if (km <= 3) return 140
+  if (km <= 4) return 180
+  return 180 + Math.ceil(((km - 4) * RATE_PER_KM) / 10) * 10
+}
 
 const KARACHI_VIEWBOX = '66.80,25.15,67.45,24.75'
 
