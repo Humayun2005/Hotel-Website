@@ -1,4 +1,4 @@
-﻿import { StrictMode, useEffect, useMemo, useRef, useState } from 'react'
+import { StrictMode, useEffect, useMemo, useRef, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { z } from 'zod'
 import {
@@ -16,6 +16,8 @@ import pizzaPhoto from './assets/hero/pizza.jpg'
 import biryaniBowlPhoto from './assets/hero/biryani-bowl.jpg'
 import { categories as categoryList, menu, startingPrice } from './menuData.js'
 import { menuImages } from './menuImages.js'
+import { RATE_PER_KM, MIN_FEE, MAX_KM, RESTAURANT, buildLocation, currentPosition, mapsLink, searchAddress } from './location.js'
+import { LoaderCircle, LocateFixed } from 'lucide-react'
 
 const WHATSAPP_NUMBER = '923112558691'
 const checkoutSchema = z.object({
@@ -23,19 +25,13 @@ const checkoutSchema = z.object({
   name: z.string().trim().min(1, 'Name is required').max(100, 'Name must be 100 characters or fewer').regex(/^[A-Za-z ]+$/, 'Name can contain only letters and spaces'),
   phone: z.string().trim().min(1, 'Phone number is required').max(20, 'Phone number must be 20 characters or fewer').regex(/^[0-9+() ]+$/, 'Phone can contain only numbers, +, brackets, and spaces'),
   email: z.string().trim().max(100, 'Email must be 100 characters or fewer').email('Enter a valid email address').or(z.literal('')),
-  destination: z.string().trim(),
   address: z.string().max(1000, 'Address must be 1000 characters or fewer'),
   instructions: z.string().max(1000, 'Instructions must be 1000 characters or fewer'),
 }).superRefine((details, context) => {
   if (details.type === 'delivery') {
-    if (!details.destination) context.addIssue({ code: z.ZodIssueCode.custom, path: ['destination'], message: 'Delivery area is required' })
-    if (!details.address.trim()) context.addIssue({ code: z.ZodIssueCode.custom, path: ['address'], message: 'Delivery address is required' })
+    if (!details.address.trim()) context.addIssue({ code: z.ZodIssueCode.custom, path: ['address'], message: 'House / flat, street and landmark are required' })
   }
 })
-const deliveryZones = [
-  ['Tree of Life School / Arsalan School', 60], ['Asifa Aftab School / Iqra School', 60], ['K Area Market / Taj School / Pakora Street', 80], ['J1 Area / Madni Masjid / APWA School', 80], ['Darul Uloom', 70], ['Darul Uloom Basti / J Area Firdous Masjid', 90], ['Burmi Colony / Safaid Masjid', 80], ['Shareef Colony / Imran Sweets', 90], ['36/B Double Road', 90], ['Ghosia Food / Baboo Arain Sweets', 100], ['36/B Double Road National School', 100], ['Mahad Madarsa / 36/B Kiran Bakery', 100], ['Noor Masjid / Atta Ka Thalla', 100], ['36/B Rehmania Masjid / Eid Gah Ground', 100], ['Zamanabad Karachi City School', 130], ['Zamanabad 37/A Sheriya Masjid', 150], ['Memon Institute / Habib Pakwan', 100], ['Area 36/C / Civic Center', 120], ['Landhi 6 / Farooqi Masjid', 110], ['Adnan Medical / JIQ Hospital', 120], ['Shahi Masjid / Master Biryani', 120], ['Bismillah Masjid / Landhi 6 Nagori', 120], ['Khwaja Chowrangi / Hammad Bhai Street', 120], ['L6 Afaq Bhai Street / Ibrahim Machakki', 130], ['Landhi Chiragh Hotel', 150], ['Landhi 4 Police Station Backside', 160], ['Landhi Babar Market', 190], ['Pakitek Ismail Goth Qabristan', 150], ['Landhi Party Fast Food', 220], ['Farooq Villas', 230], ['Khaddi Stop / Ali Hotel / Mughal House', 80], ['Zaman Town Tanzeem Floor Mills', 90], ['Zaman Town Millan / Owais Park', 100], ['Zaman Town Iqra School / Compound', 110], ['Zaman Town Gulshan-e-Muhammadi', 130], ['Kabaddi Ground / Rehan College', 120], ['Labour Square 34/3 Food Qabila', 120], ['Kallu Chowk Around', 110], ['Kamran Autos / Polytechnical', 130], ['Sector 34/2 Kalwa Hotel', 140], ['Korangi 4 / King Broast Area', 120], ['Korangi 4 Police Station / Rent A Car', 130], ['Korangi 5 F Area / Opp Park', 140], ['Civic Center Backside', 120], ['KPS School Korangi 5.5 / Kallu Tyre', 160], ['Rajputana Hospital / Korangi 2.5', 170], ['Korangi 2.5 / Gharib Nawaz Stop', 170], ['Korangi 1.5 / 32-B Labour Square', 180], ['Korangi 1 / 32-B Firdous Masjid', 200], ['LRBT Hospital', 180], ['50-A Madina Colony / Coast Guard', 200], ['Al-Mustafa Trust / TCF School / Chungi', 220], ['Pappan Chowk / Universal Town', 230], ['Nasir Colony / Zia Colony', 180], ['Chakra Goth / Nasir Jump', 200], ['Bhitai Colony', 230], ['Korangi Creek', 250], ['Sharafi Goth / United Towel', 100], ['Sharafi Goth UC Office', 110], ['Muhammad City / Shah Ali Goth', 200], ['Murtuza Baloch Pan Shop', 100], ['Hussain Shaheed Society Murtuza', 150], ['Mansehra Dildar Hotel', 200], ['Future More / Al-Jannat Restaurant', 200], ['Dawood Chowrangi / Zafar Hospital', 230], ['Awami Colony', 100], ['Awami Colony Power House', 110], ['Bagh-e-Korangi Rado Bakery', 160], ['Bagh-e-Korangi Sector 10 Rado Street', 170], ['Sector 10 Millat / Baloch House', 180], ['Bagh-e-Korangi Qabristan / Hafta Bazar', 180], ['Bagh-e-Korangi Madni / Al-Hamra City', 200], ['Saima Luxury Homes', 200], ['Bilal Chowrangi Dak Khana', 150], ['Lucknow Society / P&T Society', 220], ['Ghospak Road 17-K Stop', 180], ['100 Quarters', 220], ['Korangi 6 Girls College', 180], ['51-C Aqil Sweets to Astana', 145], ['Ilyas Goth', 230], ['Jumma Goth Muneem Clinic', 220], ['Gul Ahmed Gate No 8', 280], ['Rizwan Sweets / Landhi 1-D', 220], ['Mansehra Aziz Medical', 170], ['Artistic Denim Mills / Shan Chowrangi', 170], ['Nasir Colony Chishtiya / Babu Hotel', 200], ['Coast Guard W22 Stop', 200], ['Pakistan Safety Glass', 100], ['Getz Pharma / Indus Pharma Singer', 100], ['Naveena Textile / J. Head Office', 100], ['Karachi Paper Mill / Nelson Paints', 100], ['Rujby Waghning / Denim E', 100], ['Razi & Sons / Opp Mahad Madarsa', 100], ['DIC Bulle Shah Packages / Habib Knits', 100], ['Healthtech Awami / Rujby Headoffice', 100], ['Martin Dow Pharma / Herbion Pharma', 100], ['AGI K2 / International / Aspin / Abbott', 110], ['Bykiya Company / Silver Textile Bilal', 150], ['Pie in the Sky / AM14 Bilal Chowrangi', 150], ['AM4 / Reflection Vita Chowrangi', 160], ['Synergies Sourcing / Getz Vita Chowrangi', 160], ['Soorty Unit 9 / Mehran Foods', 180], ['National Oil Refinery / Vita Chowrangi', 190], ['Opal Laboratories / AFM4 Murtuza', 170], ['AM16 / Herbion Pharma Future More', 200], ['Hilton Pharma Godam Chowrangi', 220], ['Sailani K Samne Area Godam Chowrangi', 220], ['Gulzar Colony', 180], ['Mehran Town', 220], ['Shah Faisal No 2300', 230], ['Hospital Chowrangi', 400], ['Nazimabad', 800], ['Other Karachi area (fee confirmed on WhatsApp)', 250],
-]
-const getDeliveryFee = (zone) => deliveryZones.find(([name]) => name === zone)?.[1] || 250
 const categories = categoryList.map((category) => category.name)
 const categoryIcons = Object.fromEntries(categoryList.map((category) => [category.name, category.icon]))
 const sectionMeta = Object.fromEntries(categoryList.map((category) => [category.name, [category.eyebrow, category.title]]))
@@ -49,10 +45,15 @@ const heroSlides = [
   { image: pizzaPhoto, title: 'Cheesy Pizza', label: 'Pizza' },
   { image: biryaniBowlPhoto, title: 'Chicken Pulao', label: 'Pulao' },
 ]
-const deliveryAreaCount = deliveryZones.length - 1
 const searchHints = ['chicken biryani', 'bbq platter', 'zinger burger', 'malai boti', 'chicken karahi', 'lava pizza', 'nihari']
 
 const money = (value) => `Rs.${value.toLocaleString('en-PK')}`
+const readSavedLocation = () => {
+  try {
+    const saved = JSON.parse(localStorage.getItem('united-location') || 'null')
+    return saved && typeof saved.lat === 'number' && typeof saved.fee === 'number' ? saved : null
+  } catch { return null }
+}
 
 function App() {
   const [search, setSearch] = useState('')
@@ -66,14 +67,13 @@ function App() {
   const [sideMenuOpen, setSideMenuOpen] = useState(false)
   const [selectedItem, setSelectedItem] = useState(null)
   const [orderMode, setOrderMode] = useState(() => localStorage.getItem('united-order-mode') || '')
-  const [destination, setDestination] = useState(() => localStorage.getItem('united-destination') || '')
+  const [location, setLocation] = useState(readSavedLocation)
   const [toast, setToast] = useState('')
   const [showBackToTop, setShowBackToTop] = useState(false)
   const [activeCategory, setActiveCategory] = useState(categories[0])
   const [locationGateOpen, setLocationGateOpen] = useState(() => {
     const savedMode = localStorage.getItem('united-order-mode') || ''
-    const savedDestination = localStorage.getItem('united-destination') || ''
-    return !savedMode || (savedMode === 'delivery' && !savedDestination)
+    return !savedMode || (savedMode === 'delivery' && !readSavedLocation())
   })
 
   useEffect(() => { localStorage.setItem('united-cart-v2', JSON.stringify(cart)); localStorage.removeItem('united-cart') }, [cart])
@@ -102,7 +102,7 @@ function App() {
 
   const itemCount = cart.reduce((sum, entry) => sum + entry.quantity, 0)
   const subtotal = cart.reduce((sum, entry) => sum + entry.price * entry.quantity, 0)
-  const deliveryFee = orderMode === 'delivery' ? getDeliveryFee(destination) : 0
+  const deliveryFee = orderMode === 'delivery' && location ? location.fee : 0
   const grandTotal = subtotal + deliveryFee
   const quantityOf = (id) => cart.filter((entry) => entry.id === id).reduce((sum, entry) => sum + entry.quantity, 0)
 
@@ -129,11 +129,15 @@ function App() {
   const singleKey = (dish) => `${dish.id}:${dish.variants[0].label}`
 
   const placeOrder = (details) => {
-    const orderDeliveryFee = details.type === 'delivery' ? getDeliveryFee(details.destination || destination) : 0
+    // Basic spam guard: one order every 30 seconds from this browser.
+    const last = Number(sessionStorage.getItem('united-last-order') || 0)
+    if (Date.now() - last < 30000) { notify('Please wait a few seconds before placing another order'); return }
+    sessionStorage.setItem('united-last-order', String(Date.now()))
+    const orderDeliveryFee = details.type === 'delivery' && location ? location.fee : 0
     const orderTotal = subtotal + orderDeliveryFee
     const order = { id: `UB-${Date.now().toString().slice(-6)}`, date: new Date().toLocaleDateString('en-PK'), items: cart, total: orderTotal, ...details }
-    const lines = cart.map((entry) => `â€¢ ${entry.name}\n  Quantity: ${entry.quantity}\n  Price: ${money(entry.price * entry.quantity)}${entry.specialInstructions ? `\n  Special instructions: ${entry.specialInstructions}` : ''}`).join('\n\n')
-    const message = `*NEW ORDER â€” UNITED BIRYANI*
+    const lines = cart.map((entry) => `• ${entry.name}\n  Quantity: ${entry.quantity}\n  Price: ${money(entry.price * entry.quantity)}${entry.specialInstructions ? `\n  Special instructions: ${entry.specialInstructions}` : ''}`).join('\n\n')
+    const message = `*NEW ORDER — UNITED BIRYANI*
 
 *Order ID:* ${order.id}
 
@@ -147,7 +151,7 @@ Delivery fee: ${money(orderDeliveryFee)}
 
 *ORDER DETAILS*
 Order type: ${details.type === 'delivery' ? 'Delivery' : 'Pickup'}
-${details.destination || destination ? `Area: ${details.destination || destination}\n` : ''}${details.address ? `Address: ${details.address}\n` : ''}
+${details.type === 'delivery' && location ? `House / street: ${details.address}\nLocation: ${location.address}\nDistance: ${location.km} km (Rs ${RATE_PER_KM}/km)\nMap: ${mapsLink(location)}\n` : `Pickup from: ${RESTAURANT.address}\n`}
 *CUSTOMER DETAILS*
 Name: ${details.name}
 Phone: ${details.phone}
@@ -160,12 +164,11 @@ Payment: Cash on delivery`
   const chooseMode = (mode, persist = true) => {
     setOrderMode(mode)
     if (persist) localStorage.setItem('united-order-mode', mode)
-    if (persist && mode === 'pickup') {
-      setDestination('')
-      localStorage.removeItem('united-destination')
-    }
   }
-  const chooseDestination = (value) => { setDestination(value); localStorage.setItem('united-destination', value) }
+  const chooseLocation = (value) => {
+    setLocation(value)
+    try { localStorage.setItem('united-location', JSON.stringify(value)); localStorage.removeItem('united-destination') } catch { /* storage unavailable */ }
+  }
   const jumpTo = (category) => {
     const element = document.getElementById(sectionId(category))
     if (element) window.scrollTo({ top: element.getBoundingClientRect().top + window.scrollY - 80, behavior: 'smooth' })
@@ -177,7 +180,7 @@ Payment: Cash on delivery`
     window.scrollTo({ top: input.getBoundingClientRect().top + window.scrollY - 140, behavior: 'smooth' })
     window.setTimeout(() => input.focus({ preventScroll: true }), 450)
   }
-  const locationLabel = orderMode === 'pickup' ? 'Korangi Kitchen' : destination || 'Select area'
+  const locationLabel = orderMode === 'pickup' ? 'Korangi Kitchen' : location?.address || 'Select location'
   const cartBarVisible = itemCount > 0 && !cartOpen
 
   return <div className="frame">
@@ -211,7 +214,7 @@ Payment: Cash on delivery`
               {items.map((dish) => <MenuCard key={dish.id} dish={dish} quantity={quantityOf(dish.id)} open={() => setSelectedItem(dish)} increase={() => addToCart(dish)} decrease={() => updateQuantity(singleKey(dish), -1)} />)}
             </div>
           </section>)}
-          {sections.length === 0 && <div className="empty-state"><Search size={34} /><p>No dishes found for â€œ{search}â€.</p><button className="btn-primary" onClick={() => setSearch('')}>Clear search</button></div>}
+          {sections.length === 0 && <div className="empty-state"><Search size={34} /><p>No dishes found for “{search}”.</p><button className="btn-primary" onClick={() => setSearch('')}>Clear search</button></div>}
         </div>
 
         <Features />
@@ -228,7 +231,7 @@ Payment: Cash on delivery`
             <p>United Biryani brings the warmth of Karachi's food streets to your doorstep. Fragrant biryani, smoky BBQ, desi karahi and fresh fast food, cooked to order in our Korangi kitchen and delivered hot across Karachi.</p>
             <div className="about-stats">
               <div><b><CountUp value={menu.length} suffix="+" /></b><span>Menu items</span></div>
-              <div><b><CountUp value={deliveryAreaCount} suffix="+" /></b><span>Delivery areas</span></div>
+              <div><b>Rs <CountUp value={RATE_PER_KM} /></b><span>Delivery per km</span></div>
               <div><b><CountUp value={100} suffix="%" /></b><span>Fresh ingredients</span></div>
             </div>
           </Reveal>
@@ -261,7 +264,7 @@ Payment: Cash on delivery`
           <div className="footer-contact">
             <span className="contact-icon"><MapPin size={18} /></span><p>K 19/14 Main Korangi Industrial Road, Sherabad Colony, Landhi Town, Karachi.</p>
             <span className="contact-icon"><Phone size={18} /></span><a className="strong" href={`tel:+${WHATSAPP_NUMBER}`}>0311-2558691</a>
-            <span className="contact-icon"><Clock3 size={18} /></span><p>Open daily Â· 11:00 AM â€” 2:00 AM</p>
+            <span className="contact-icon"><Clock3 size={18} /></span><p>Open daily · 11:00 AM — 2:00 AM</p>
           </div>
         </div>
         <div>
@@ -271,7 +274,7 @@ Payment: Cash on delivery`
         </div>
       </div>
       <div className="footer-bottom">
-        <span><i className="live-dot" />Â© 2026 United Biryani. All rights reserved</span>
+        <span><i className="live-dot" />© 2026 United Biryani. All rights reserved</span>
         <span>Powered by <a href="https://thedigitalcreativity.com" target="_blank" rel="noreferrer">The Digital Creativity</a></span>
       </div>
     </footer>
@@ -279,10 +282,10 @@ Payment: Cash on delivery`
     {cartBarVisible && <button className="view-cart-bar" onClick={() => setCartOpen(true)}><span className="view-cart-count">{itemCount}</span><b>View Cart</b><b>{money(subtotal)}</b></button>}
     {sideMenuOpen && <SideMenu close={() => setSideMenuOpen(false)} sections={sections} jumpTo={jumpTo} openOrders={() => setOrdersOpen(true)} openLocation={() => setLocationGateOpen(true)} openCart={() => setCartOpen(true)} scrollToId={scrollToId} itemCount={itemCount} />}
 
-    {(locationGateOpen || !orderMode || (orderMode === 'delivery' && !destination)) && <LocationGate mode={orderMode} destination={destination} chooseMode={chooseMode} chooseDestination={chooseDestination} close={() => setLocationGateOpen(false)} dismissible={Boolean(orderMode && (orderMode === 'pickup' || destination))} />}
+    {(locationGateOpen || !orderMode || (orderMode === 'delivery' && !location)) && <LocationGate mode={orderMode} location={location} chooseMode={chooseMode} chooseLocation={chooseLocation} close={() => setLocationGateOpen(false)} dismissible={Boolean(orderMode && (orderMode === 'pickup' || location))} />}
     {selectedItem && <ProductModal item={selectedItem} close={() => setSelectedItem(null)} add={addToCart} />}
-    {cartOpen && <CartDrawer cart={cart} subtotal={subtotal} deliveryFee={deliveryFee} grandTotal={grandTotal} updateQuantity={updateQuantity} clearCart={() => setCart([])} close={() => setCartOpen(false)} checkout={() => { setCartOpen(false); setCheckoutOpen(true) }} mode={orderMode} destination={destination} chooseDestination={chooseDestination} />}
-    {checkoutOpen && <CheckoutModal total={grandTotal} deliveryFee={deliveryFee} close={() => setCheckoutOpen(false)} submit={placeOrder} mode={orderMode} destination={destination} />}
+    {cartOpen && <CartDrawer cart={cart} subtotal={subtotal} deliveryFee={deliveryFee} grandTotal={grandTotal} updateQuantity={updateQuantity} clearCart={() => setCart([])} close={() => setCartOpen(false)} checkout={() => { setCartOpen(false); setCheckoutOpen(true) }} mode={orderMode} location={location} changeLocation={() => setLocationGateOpen(true)} />}
+    {checkoutOpen && <CheckoutModal subtotal={subtotal} close={() => setCheckoutOpen(false)} submit={placeOrder} mode={orderMode} location={location} chooseMode={chooseMode} changeLocation={() => setLocationGateOpen(true)} />}
     {ordersOpen && <OrderHistory orders={history} close={() => setOrdersOpen(false)} />}
     {toast && <div className="toast"><Check size={17} /> {toast}</div>}
     <button className={`floating-search${cartBarVisible ? ' over-bar' : ''}`} onClick={focusSearch} aria-label="Search the menu"><Search size={22} /></button>
@@ -513,27 +516,76 @@ function MenuCard({ dish, quantity, open, increase, decrease }) {
   </article>
 }
 
-function LocationSearchSelect({ value, onChange, label = 'Select an Area' }) {
+// "Use Current Location" + address search. Every pick is priced by road distance × Rs per km.
+function LocationPicker({ value, onChange }) {
+  const [status, setStatus] = useState({ busy: false, error: '' })
   const [query, setQuery] = useState('')
-  const [open, setOpen] = useState(false)
-  const selectRef = useRef(null)
-  const filteredZones = deliveryZones.filter(([name]) => name.toLowerCase().includes(query.toLowerCase()))
+  const [results, setResults] = useState([])
+  const [searching, setSearching] = useState(false)
+
   useEffect(() => {
-    const closeResults = (event) => {
-      if (!selectRef.current?.contains(event.target)) { setQuery(''); setOpen(false) }
+    const term = query.trim()
+    if (term.length < 3) { setResults([]); return undefined }
+    const controller = new AbortController()
+    const timer = window.setTimeout(async () => {
+      setSearching(true)
+      try { setResults(await searchAddress(term, controller.signal)) } catch { if (!controller.signal.aborted) setResults([]) }
+      if (!controller.signal.aborted) setSearching(false)
+    }, 450)
+    return () => { controller.abort(); window.clearTimeout(timer) }
+  }, [query])
+
+  const pick = async (lat, lon, address) => {
+    setStatus({ busy: true, error: '' })
+    try {
+      onChange(await buildLocation(lat, lon, address))
+      setQuery(''); setResults([])
+      setStatus({ busy: false, error: '' })
+    } catch {
+      setStatus({ busy: false, error: 'Could not work out the distance. Please check your internet and try again.' })
     }
-    document.addEventListener('mousedown', closeResults, true)
-    return () => document.removeEventListener('mousedown', closeResults, true)
-  }, [])
-  const selectArea = (name) => { onChange(name); setQuery(''); setOpen(false) }
-  return <div ref={selectRef} className={`area-select${open ? ' is-open' : ''}`}>
-    <div className="area-control">
-      <input value={open ? query : value} onFocus={() => { setOpen(true); setQuery('') }} onChange={(event) => { setOpen(true); setQuery(event.target.value) }} placeholder={value || label} aria-label={label} />
-      <span className="area-separator" /><ChevronDown size={18} />
+  }
+  const useCurrent = async () => {
+    setStatus({ busy: true, error: '' })
+    try {
+      const { lat, lon } = await currentPosition()
+      await pick(lat, lon)
+    } catch (error) {
+      setStatus({ busy: false, error: error.message })
+    }
+  }
+  // Ask for location access as soon as the delivery popup opens (the browser shows its permission prompt).
+  const askedRef = useRef(false)
+  useEffect(() => {
+    if (!value && !askedRef.current) { askedRef.current = true; useCurrent() }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  return <div className="loc-picker">
+    <p className="loc-hint">Please select your location</p>
+    <button type="button" className="loc-current" onClick={useCurrent} disabled={status.busy}>
+      {status.busy ? <LoaderCircle size={18} className="spin" /> : <LocateFixed size={18} />} {status.busy ? 'Finding your location…' : 'Use Current Location'}
+    </button>
+    <div className="loc-or"><span>or search your address</span></div>
+    <div className={`area-select${results.length || searching ? ' is-open' : ''}`}>
+      <div className="area-control">
+        <Search size={17} />
+        <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="e.g. Korangi 5, Zaman Town, Shah Faisal" aria-label="Search your address" />
+        {searching && <LoaderCircle size={17} className="spin" />}
+      </div>
+      {(results.length > 0 || (searching === false && query.trim().length >= 3)) && <div className="area-menu" role="listbox">
+        {results.map((place) => <button type="button" role="option" aria-selected="false" key={`${place.lat},${place.lon}`} onClick={() => pick(place.lat, place.lon, place.address)}><MapPin size={15} /><span>{place.address}</span></button>)}
+        {results.length === 0 && <small className="area-empty">No matching address in Karachi. Try a nearby landmark or use current location.</small>}
+      </div>}
     </div>
-    {open && <div className="area-menu" role="listbox">
-      {filteredZones.map(([name, fee]) => <button type="button" role="option" aria-selected={name === value} key={name} onClick={() => selectArea(name)}><span>{name}</span><small>{money(fee)}</small></button>)}
-      {filteredZones.length === 0 && <small className="area-empty">No options</small>}
+    {status.error && <p className="loc-error">{status.error}</p>}
+    {value && <div className={`loc-card${value.outOfRange ? ' out' : ''}`}>
+      <span className="loc-card-icon"><MapPin size={18} /></span>
+      <div>
+        <b>{value.address}</b>
+        {value.outOfRange
+          ? <small className="loc-warn">This is beyond our {MAX_KM} km delivery range. Please choose pickup or message us on WhatsApp.</small>
+          : <span className="loc-fee">Delivery fee <b>{money(value.fee)}</b></span>}
+      </div>
     </div>}
   </div>
 }
@@ -545,27 +597,26 @@ function ModeToggle({ mode, onChange }) {
   </div>
 }
 
-function LocationGate({ mode, destination, chooseMode, chooseDestination, close, dismissible }) {
-  const [area, setArea] = useState(destination)
+function LocationGate({ mode, location, chooseMode, chooseLocation, close, dismissible }) {
+  const [picked, setPicked] = useState(location)
   const [localMode, setLocalMode] = useState(mode || 'delivery')
-  const ready = localMode === 'pickup' || Boolean(area)
+  const ready = localMode === 'pickup' || Boolean(picked && !picked.outOfRange)
   const submit = (event) => {
     event.preventDefault()
     if (!ready) return
     chooseMode(localMode, true)
-    if (localMode === 'delivery') chooseDestination(area)
+    if (localMode === 'delivery') chooseLocation(picked)
     close()
   }
-  return <div className="overlay center" onMouseDown={() => dismissible && close()}>
+  return <div className="overlay center gate-overlay" onMouseDown={() => dismissible && close()}>
     <form className="area-modal" onMouseDown={(event) => event.stopPropagation()} onSubmit={submit}>
+      <div className="area-modal-head"><span><img src={logo} alt="United Biryani" /></span></div>
       <div className="area-modal-body">
-        <img className="area-modal-logo" src={logo} alt="United Biryani" />
-        <p className="branch-text">{localMode === 'pickup' ? 'Please Select Branch' : 'Please Select your area'}</p>
+        <p className="branch-text">Select Your Order Type</p>
         <ModeToggle mode={localMode} onChange={setLocalMode} />
         {localMode === 'delivery'
-          ? <LocationSearchSelect value={area} onChange={setArea} />
-          : <div className="branch-card"><Utensils size={18} /><span><b>Korangi Kitchen</b><small>K 19/14 Main Korangi Industrial Road, Landhi Town</small></span><Check size={18} /></div>}
-        {localMode === 'delivery' && area && <p className="area-fee">Delivery fee for this area: <b>{money(getDeliveryFee(area))}</b></p>}
+          ? <LocationPicker value={picked} onChange={setPicked} />
+          : <div className="branch-card"><Utensils size={18} /><span><b>Korangi Kitchen</b><small>{RESTAURANT.address}</small></span><Check size={18} /></div>}
       </div>
       <div className="area-modal-footer"><button type="submit" className="btn-primary full" disabled={!ready}>Select</button></div>
     </form>
@@ -606,7 +657,7 @@ function ProductModal({ item: dish, close, add }) {
   </div>
 }
 
-function CartDrawer({ cart, subtotal, deliveryFee, grandTotal, updateQuantity, clearCart, close, checkout, mode, destination, chooseDestination }) {
+function CartDrawer({ cart, subtotal, deliveryFee, grandTotal, updateQuantity, clearCart, close, checkout, mode, location, changeLocation }) {
   return <div className="overlay" onMouseDown={close}>
     <aside className="cart-drawer" onMouseDown={(event) => event.stopPropagation()}>
       <div className="cart-head">
@@ -620,7 +671,7 @@ function CartDrawer({ cart, subtotal, deliveryFee, grandTotal, updateQuantity, c
           <div className="cart-stepper"><button onClick={() => updateQuantity(entry.key, -1)} aria-label="Decrease">{entry.quantity === 1 ? <Trash2 size={13} className="trash" /> : <Minus size={13} />}</button><span>{entry.quantity}</span><button onClick={() => updateQuantity(entry.key, 1)} aria-label="Increase"><Plus size={13} /></button></div>
         </div>)}
         <button className="add-more" onClick={close}><Plus size={16} /> Add More Items</button>
-        {mode === 'delivery' && <label className="cart-area">Delivery area<LocationSearchSelect value={destination} onChange={chooseDestination} label="Search delivery area" /></label>}
+        {mode === 'delivery' && <DeliveryTo location={location} change={changeLocation} />}
         <div className="totals">
           <div><span>Total</span><span>{money(subtotal)}</span></div>
           <div><span>Delivery fee</span><span>{mode === 'delivery' ? money(deliveryFee) : 'Rs.0'}</span></div>
@@ -633,9 +684,21 @@ function CartDrawer({ cart, subtotal, deliveryFee, grandTotal, updateQuantity, c
   </div>
 }
 
-function CheckoutModal({ total, deliveryFee, close, submit, mode, destination }) {
+function DeliveryTo({ location, change }) {
+  return <div className="deliver-to">
+    <span className="loc-card-icon"><MapPin size={17} /></span>
+    <div>
+      <small>Delivering to</small>
+      <b>{location ? location.address : 'No location selected'}</b>
+      {location && <small>Delivery fee {money(location.fee)}</small>}
+    </div>
+    <button type="button" onClick={change}>Change</button>
+  </div>
+}
+
+function CheckoutModal({ subtotal, close, submit, mode, location, chooseMode, changeLocation }) {
   const [type, setType] = useState(mode || '')
-  const [details, setDetails] = useState({ name: '', phone: '', email: '', address: '', destination, instructions: '' })
+  const [details, setDetails] = useState({ name: '', phone: '', email: '', address: '', instructions: '' })
   const [errors, setErrors] = useState({})
   const validate = (nextDetails = details, nextType = type) => {
     const result = checkoutSchema.safeParse({ ...nextDetails, type: nextType })
@@ -650,11 +713,14 @@ function CheckoutModal({ total, deliveryFee, close, submit, mode, destination })
   }
   const chooseType = (nextType) => {
     setType(nextType)
+    chooseMode(nextType, true)
     validate(details, nextType)
+    if (nextType === 'delivery' && !location) changeLocation()
   }
-  const canSubmit = checkoutSchema.safeParse({ ...details, type }).success
-  const currentDeliveryFee = type === 'delivery' ? getDeliveryFee(details.destination) : 0
-  const subtotalValue = total - deliveryFee
+  const locationReady = type !== 'delivery' || Boolean(location && !location.outOfRange)
+  const canSubmit = checkoutSchema.safeParse({ ...details, type }).success && locationReady
+  const currentDeliveryFee = type === 'delivery' && location ? location.fee : 0
+  const subtotalValue = subtotal
   const currentTotal = subtotalValue + currentDeliveryFee
   const fieldError = (field, value) => errors[field] && value.trim() && <small className="field-error">{errors[field]}</small>
   const characterCount = (value, limit) => <small className="character-count">{value.length}/{limit}</small>
@@ -667,8 +733,8 @@ function CheckoutModal({ total, deliveryFee, close, submit, mode, destination })
         <label>Phone number <b className="required-mark">*</b><input maxLength="20" value={details.phone} onChange={(event) => updateDetails('phone', event.target.value)} placeholder="03XX XXXXXXX" type="tel" />{fieldError('phone', details.phone)}{characterCount(details.phone, 20)}</label>
         <label>Email <span className="optional-label">(optional)</span><input maxLength="100" value={details.email} onChange={(event) => updateDetails('email', event.target.value)} placeholder="e.g. ayesha@example.com" type="email" />{fieldError('email', details.email)}</label>
         {type === 'delivery' && <>
-          <label>Area <b className="required-mark">*</b><LocationSearchSelect value={details.destination} onChange={(value) => updateDetails('destination', value)} label="Select an Area" />{fieldError('destination', details.destination)}</label>
-          <label>Delivery address <b className="required-mark">*</b><textarea maxLength="1000" value={details.address} onChange={(event) => updateDetails('address', event.target.value)} placeholder="House, street, area, Karachi" rows="3" />{fieldError('address', details.address)}{characterCount(details.address, 1000)}</label>
+          <DeliveryTo location={location} change={changeLocation} />
+          <label>Exact address <b className="required-mark">*</b><textarea maxLength="1000" value={details.address} onChange={(event) => updateDetails('address', event.target.value)} placeholder="House / flat no., floor, street, block and a nearby landmark" rows="3" />{fieldError('address', details.address)}{characterCount(details.address, 1000)}</label>
         </>}
         <label>Other instructions <span className="optional-label">(optional)</span><textarea maxLength="1000" value={details.instructions} onChange={(event) => updateDetails('instructions', event.target.value)} placeholder="Any other instructions for your order..." rows="3" />{fieldError('instructions', details.instructions)}</label>
         <div className="totals">
@@ -676,11 +742,12 @@ function CheckoutModal({ total, deliveryFee, close, submit, mode, destination })
           <div><span>Delivery fee</span><span>{type === 'delivery' ? money(currentDeliveryFee) : 'Rs.0'}</span></div>
           <div className="grand"><span>Grand Total</span><span>{money(currentTotal)}</span></div>
         </div>
-        <div className="payment-row"><span className="cash-icon">â‚¨</span><span><b>Cash on delivery</b><small>Pay when your order arrives</small></span><Check size={18} /></div>
+        <div className="payment-row"><span className="cash-icon">₨</span><span><b>Cash on delivery</b><small>Pay when your order arrives</small></span><Check size={18} /></div>
       </div>
       <div className="checkout-foot">
         <button className="btn-primary full" disabled={!canSubmit} onClick={() => { if (validate()) submit({ ...details, type }) }}>Place Order</button>
         {!type && <small className="field-error center">Please select Delivery or Pickup</small>}
+        {type === 'delivery' && !locationReady && <small className="field-error center">Please select a delivery location within {MAX_KM} km</small>}
       </div>
     </div>
   </div>
@@ -691,7 +758,7 @@ function OrderHistory({ orders, close }) {
     <div className="checkout-modal history-modal" onMouseDown={(event) => event.stopPropagation()}>
       <div className="checkout-head"><h5>My Orders</h5><button className="round-btn" onClick={close} aria-label="Close"><X size={16} /></button></div>
       <div className="checkout-body">
-        {orders.length ? orders.map((order) => <div className="history-item" key={order.id}><div><b>{order.id}</b><small>{order.date} Â· {order.type === 'delivery' ? 'Delivery' : 'Pickup'}</small></div><b>{money(order.total)}</b></div>)
+        {orders.length ? orders.map((order) => <div className="history-item" key={order.id}><div><b>{order.id}</b><small>{order.date} · {order.type === 'delivery' ? 'Delivery' : 'Pickup'}</small></div><b>{money(order.total)}</b></div>)
           : <div className="cart-empty"><History size={40} /><b>No orders yet</b><span>Your recent orders will appear here on this device.</span></div>}
       </div>
     </div>

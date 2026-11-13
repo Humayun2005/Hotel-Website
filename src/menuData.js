@@ -27,7 +27,11 @@ const sml = (s, m, l) => [{ label: 'Small', price: s }, { label: 'Medium', price
 const sl = (s, l) => [{ label: 'Small', price: s }, { label: 'Large', price: l }]
 const halfFull = (half, full) => [{ label: 'Half Plate', price: half }, { label: 'Full Plate', price: full }]
 
+// Photo file name for a dish, e.g. "Chicken Biryani (Plain)" → "chicken-biryani" (src/assets/menu/<slug>.jpg).
+export const slug = (name) => name.toLowerCase().replace(/\(.*?\)/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+
 let nextId = 1
+// `img` is a photo key in src/assets/menu (closest real photo of that dish type).
 const dish = (cat, name, variants, img, desc) => ({ id: nextId++, cat, name, variants: Array.isArray(variants) ? variants : one(variants), img, desc })
 
 const platterSides = 'Raita, salad, fries & chutney'
