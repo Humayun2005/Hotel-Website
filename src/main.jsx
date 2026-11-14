@@ -1,4 +1,4 @@
-import { StrictMode, useEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, StrictMode, useEffect, useMemo, useRef, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { z } from 'zod'
 import {
@@ -21,7 +21,12 @@ import { LoaderCircle, LocateFixed, Mail } from 'lucide-react'
 
 const SUPPORT_EMAIL = 'unitedfastfood51@gmail.com'
 
-const WHATSAPP_NUMBER = '923112558691'
+// WhatsApp (orders, checkout, WhatsApp buttons) goes to the first number; both are shown for calls.
+const WHATSAPP_NUMBER = '923330297885'
+const PHONES = [
+  { label: '0333-0297885', tel: '+923330297885' },
+  { label: '0311-1273037', tel: '+923111273037' },
+]
 const checkoutSchema = z.object({
   type: z.enum(['delivery', 'pickup']),
   name: z.string().trim().min(1, 'Name is required').max(100, 'Name must be 100 characters or fewer').regex(/^[A-Za-z ]+$/, 'Name can contain only letters and spaces'),
@@ -193,7 +198,7 @@ Payment: Cash on delivery`
           <span className="outline-pill-text"><small>{orderMode === 'pickup' ? 'Pickup from' : 'Change Location'}</small><b>{locationLabel}</b></span>
           <ChevronRight size={16} className="outline-pill-chevron" />
         </button>
-        <a className="outline-pill phone" href={`tel:+${WHATSAPP_NUMBER}`}><Phone size={17} /><b>0311-2558691</b></a>
+        <a className="outline-pill phone" href={`tel:${PHONES[0].tel}`} aria-label={`Call ${PHONES[0].label}`}><Phone size={17} /><b>{PHONES[0].label}</b></a>
       </div>
       <a className="topbar-logo" href="#top" aria-label="United Biryani home"><img src={whiteLogo} alt="United Biryani" /></a>
       <div className="topbar-side right">
@@ -248,7 +253,7 @@ Payment: Cash on delivery`
           <p>Karachi's signature biryani, BBQ and fast food. Freshly cooked and delivered hot, straight to your doorstep.</p>
           <div className="footer-socials">
             <a href={`https://wa.me/${WHATSAPP_NUMBER}`} target="_blank" rel="noreferrer" aria-label="WhatsApp"><WhatsAppIcon size={21} /></a>
-            <a href={`tel:+${WHATSAPP_NUMBER}`} aria-label="Call us"><Phone size={18} /></a>
+            <a href={`tel:${PHONES[0].tel}`} aria-label="Call us"><Phone size={18} /></a>
             <a href={`mailto:${SUPPORT_EMAIL}`} aria-label="Email us"><Mail size={18} /></a>
             <a href="https://maps.google.com/?q=Main+Korangi+Industrial+Road+Landhi+Karachi" target="_blank" rel="noreferrer" aria-label="Find us on the map"><MapPin size={19} /></a>
           </div>
@@ -266,7 +271,7 @@ Payment: Cash on delivery`
           <h6>Contact</h6>
           <div className="footer-contact">
             <span className="contact-icon"><MapPin size={18} /></span><p>K 19/14 Main Korangi Industrial Road, Sherabad Colony, Landhi Town, Karachi.</p>
-            <span className="contact-icon"><Phone size={18} /></span><a className="strong" href={`tel:+${WHATSAPP_NUMBER}`}>0311-2558691</a>
+            {PHONES.map((phone) => <Fragment key={phone.tel}><span className="contact-icon"><Phone size={18} /></span><a className="strong" href={`tel:${phone.tel}`}>{phone.label}</a></Fragment>)}
             <span className="contact-icon"><Mail size={18} /></span><a className="email" href={`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent('Query - United Biryani')}`}>{SUPPORT_EMAIL}</a>
             <span className="contact-icon"><Clock3 size={18} /></span><p>Open daily · 11:00 AM — 2:00 AM</p>
           </div>
@@ -423,7 +428,7 @@ function SideMenu({ close, sections, jumpTo, openOrders, openLocation, openCart,
         <button onClick={() => run(openOrders)}><History size={19} /> My orders</button>
         <button onClick={() => run(openLocation)}><MapPin size={19} /> Change location</button>
         <button onClick={() => run(() => scrollToId('about'))}><Utensils size={19} /> About us</button>
-        <a href={`tel:+${WHATSAPP_NUMBER}`}><Phone size={19} /> 0311-2558691</a>
+        <a href={`tel:${PHONES[0].tel}`}><Phone size={19} /> Contact us</a>
         <a href={`https://wa.me/${WHATSAPP_NUMBER}`} target="_blank" rel="noreferrer"><WhatsAppIcon size={19} /> WhatsApp us</a>
         <a href={`mailto:${SUPPORT_EMAIL}`}><Mail size={19} /> Email support</a>
       </nav>
