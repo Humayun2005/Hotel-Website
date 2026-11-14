@@ -200,7 +200,7 @@ Payment: Cash on delivery`
         </button>
         <a className="outline-pill phone" href={`tel:${PHONES[0].tel}`} aria-label={`Call ${PHONES[0].label}`}><Phone size={17} /><b>{PHONES[0].label}</b></a>
       </div>
-      <a className="topbar-logo" href="#top" aria-label="United Biryani home"><img src={whiteLogo} alt="United Biryani" /></a>
+      <div className="topbar-logo"><img src={whiteLogo} alt="United Biryani" /></div>
       <div className="topbar-side right">
         <button className="outline-circle" onClick={() => setCartOpen(true)} aria-label="Open cart"><ShoppingCart size={21} />{itemCount > 0 && <span className="circle-badge">{itemCount}</span>}</button>
         <button className="outline-circle" onClick={() => setSideMenuOpen(true)} aria-label="Open menu"><Menu size={22} /></button>
