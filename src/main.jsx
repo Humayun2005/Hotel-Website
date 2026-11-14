@@ -1,4 +1,4 @@
-import { Fragment, StrictMode, useEffect, useMemo, useRef, useState } from 'react'
+﻿import { Fragment, StrictMode, useEffect, useMemo, useRef, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { z } from 'zod'
 import {
@@ -6,8 +6,8 @@ import {
   MapPin, Menu, MessageCircle, Minus, Phone, Play, Plus, Search, ShieldCheck, ShoppingCart, Trash2, Truck, Utensils, X,
 } from 'lucide-react'
 import './style.css'
-import logo from './assets/Red-Png.png'
-import whiteLogo from './assets/White-Png.png'
+import logo from './assets/logo-red.png'
+import whiteLogo from './assets/logo-white.png'
 import biryaniPhoto from './assets/hero/biryani.jpg'
 import bbqPhoto from './assets/hero/bbq.jpg'
 import karahiPhoto from './assets/hero/karahi.jpg'
